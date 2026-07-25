@@ -5,7 +5,7 @@ Requires at least: 6.6
 Tested up to: 7.0
 Requires PHP: 8.0
 Requires Plugins: woocommerce
-Stable tag: 0.2.0
+Stable tag: 0.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -162,6 +162,18 @@ Yes. The repository has a [WordPress Playground](https://github.com/antelligent-
 7. The store-wide audit log records every command, who ran it, and what it did.
 
 == Changelog ==
+
+= 0.2.1 =
+
+**Refactors**
+
+* fix prettier issue in eslint config
+
+**Documentation**
+
+* add a start-issue skill for github issues
+* add a start-issue skill for github issues
+* instruct claude to work by default in feature branches instead of main
 
 = 0.2.0 =
 

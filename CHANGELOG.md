@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.1](https://github.com/antelligent-org/hoobert/compare/v0.2.0...v0.2.1) (2026-07-25)
+
+
+### Refactors
+
+* fix prettier issue in eslint config ([785e68e](https://github.com/antelligent-org/hoobert/commit/785e68e9180b55110810d2be13d13340e43b2044))
+
+
+### Documentation
+
+* add a start-issue skill for github issues ([a46b18e](https://github.com/antelligent-org/hoobert/commit/a46b18e9d21f8d6c272b2ad963b9e8ad8f73735a))
+* add a start-issue skill for github issues ([e76cdb5](https://github.com/antelligent-org/hoobert/commit/e76cdb5bd3f183abab45fea969a6a93d2f61f2d1))
+* instruct claude to work by default in feature branches instead of main ([98efd6e](https://github.com/antelligent-org/hoobert/commit/98efd6e1e9772f2312796a317ff42eeed64a64cf))
+
 ## [0.2.0](https://github.com/antelligent-org/hoobert/compare/v0.1.2...v0.2.0) (2026-07-24)
 
 

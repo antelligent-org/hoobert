@@ -102,10 +102,12 @@ runs the same versions; bump them deliberately alongside the plugin's "Tested up
 ## Conventions & preferences
 
 **Git**
-- Commit **directly to `main`** — no feature branches. Exception: issue-driven work branches as `<type>/<issue-number>-<slug>` and merges back with `--no-ff`; the `start-issue` skill owns that workflow.
+- [Conventional Commits](https://www.conventionalcommits.org/): `type: lowercase imperative description`. Types: `feat`, `fix`, `refactor`, `chore`, `ci`, `docs`. Confirm state with `git status`/`git diff` before committing.
+- **Work on a feature branch, then merge to `main`.** Don't commit to `main` directly. Before the first commit of a change, create a branch and do all the work there; don't ask first. This keeps several changes progressing in parallel without conflicts, makes review via merge requests possible as more developers join, and means a half-finished series never deploys (CI builds on push to `main`, so the merge is the release, not each intermediate commit).
+- **Name the branch `<type>/<slug>`**. The conventional-commit type that fits the work, then a short lowercase hyphenated label (e.g. `refactor/tool-set-cache`). Issue-driven work inserts the issue id (`<type>/<issue-id>-<slug>`) and follows the `start-issue` skill, which owns the fuller workflow (closing footer, tests).
+- **Merge with `--no-ff`.** When the user asks to merge, always create a merge commit (`git merge --no-ff <branch>`), never a fast-forward, even for a single commit that could fast-forward cleanly: it groups the change under one point on `main` and preserves which commits belonged to which branch. Let the message default (`Merge branch '<branch>'`). Delete the local branch afterward (`git branch -d <branch>`). Push only when asked.
 - **Never commit without the user reviewing first**, and only commit when explicitly asked. Push only when asked.
 - Always make a **new commit** for follow-ups — never `git commit --amend`, even after review.
-- [Conventional Commits](https://www.conventionalcommits.org/): `type: lowercase imperative description`. Types: `feat`, `fix`, `refactor`, `chore`, `ci`, `docs`. Confirm state with `git status`/`git diff` before committing.
 
 **Code style**
 - Document exported/non-trivial functions and file headers with **block doc comments** (`/** … */` in JS; `/** … */` PHPDoc in PHP), covering what it does and any non-obvious *why*. Keep them terse. Inline `//` comments are fine inside a body.

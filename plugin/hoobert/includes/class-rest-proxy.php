@@ -74,12 +74,24 @@ class Hoobert_Rest_Proxy {
 		$context = (array) ( $request->get_param( 'context' ) ?? array() );
 
 		if ( '' === $query ) {
-			return new WP_REST_Response( array( 'ok' => false, 'error' => __( 'Empty query.', 'hoobert' ) ), 400 );
+			return new WP_REST_Response(
+				array(
+					'ok'    => false,
+					'error' => __( 'Empty query.', 'hoobert' ),
+				),
+				400
+			);
 		}
 
 		$result = ( new Hoobert_Fern_Client() )->infer( $query, $context );
 		if ( ! $result['ok'] ) {
-			return new WP_REST_Response( array( 'ok' => false, 'error' => $result['error'] ?? 'inference failed' ), 502 );
+			return new WP_REST_Response(
+				array(
+					'ok'    => false,
+					'error' => $result['error'] ?? 'inference failed',
+				),
+				502
+			);
 		}
 
 		// Annotate each call with the tool's confirm flag + human summary.
@@ -87,7 +99,7 @@ class Hoobert_Rest_Proxy {
 			static function ( $call ) {
 				$tool                = Hoobert_Tools::find( $call['name'] );
 				$call['confirm']     = (bool) ( $tool['x-woo']['confirm'] ?? false );
-				$call['description']  = $tool['function']['description'] ?? '';
+				$call['description'] = $tool['function']['description'] ?? '';
 				return $call;
 			},
 			$result['calls']
@@ -112,11 +124,17 @@ class Hoobert_Rest_Proxy {
 		$query     = trim( (string) $request->get_param( 'query' ) );
 
 		if ( '' === $name ) {
-			return new WP_REST_Response( array( 'ok' => false, 'error' => __( 'Missing tool name.', 'hoobert' ) ), 400 );
+			return new WP_REST_Response(
+				array(
+					'ok'    => false,
+					'error' => __( 'Missing tool name.', 'hoobert' ),
+				),
+				400
+			);
 		}
 
 		$result = ( new Hoobert_Executor() )->run( $name, $arguments );
-		$status = $result['ok'] ? 200 : ( $result['status'] ?: 500 );
+		$status = $result['ok'] ? 200 : ( $result['status'] > 0 ? (int) $result['status'] : 500 );
 
 		Hoobert_History::record(
 			array(
@@ -139,8 +157,14 @@ class Hoobert_Rest_Proxy {
 	/**
 	 * Return the current user's executed-command history.
 	 */
-	public function history( WP_REST_Request $request ) {
-		return new WP_REST_Response( array( 'ok' => true, 'entries' => Hoobert_History::recent() ), 200 );
+	public function history( WP_REST_Request $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- the REST callback signature passes the request; this route reads nothing from it.
+		return new WP_REST_Response(
+			array(
+				'ok'      => true,
+				'entries' => Hoobert_History::recent(),
+			),
+			200
+		);
 	}
 
 	/**

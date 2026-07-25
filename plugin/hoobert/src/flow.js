@@ -15,8 +15,10 @@ import { resolve, execute } from './api';
  * Pretty-print a value as JSON, HTML-escape it (the data carries user-controlled
  * strings), then wrap keys/strings/numbers/booleans/null in classed spans. Returns
  * a safe HTML string, so escaping must happen before the spans are added.
+ *
+ * @param {*} value Any JSON-serializable value.
  */
-function highlightJson( value ) {
+export function highlightJson( value ) {
 	const json = JSON.stringify( value, null, 2 );
 	if ( json === undefined ) {
 		return '';
@@ -49,7 +51,6 @@ function JsonBlock( { value } ) {
 	return (
 		<pre
 			className="hoobert-call-args"
-			// eslint-disable-next-line react/no-danger
 			dangerouslySetInnerHTML={ { __html: highlightJson( value ) } }
 		/>
 	);
@@ -71,8 +72,10 @@ function CallPreview( { call } ) {
  * Reduce a tool's training description to a short, merchant-facing action
  * phrase: the first sentence, before the "Use for ..." examples, with any
  * parenthetical aside and trailing period trimmed. Empty when unavailable.
+ *
+ * @param {Object} call The resolved tool call, which carries `description`.
  */
-function actionPhrase( call ) {
+export function actionPhrase( call ) {
 	const desc = ( call.description || '' ).trim();
 	if ( ! desc ) {
 		return '';
@@ -214,7 +217,7 @@ function DebugInfo( { call, result, error, response } ) {
 						<JsonBlock value={ response } />
 					</Fragment>
 				) }
-				{ result?.status != null && (
+				{ result?.status !== undefined && (
 					<p className="hoobert-debug-line">
 						HTTP status: { result.status }
 					</p>
@@ -302,8 +305,11 @@ export function HoobertFlowModal( { query, onClose } ) {
 	}, [ onClose ] );
 
 	return (
+		// The backdrop only dismisses; Esc does the same from the keyboard, so it
+		// carries no behaviour of its own for assistive tech to announce.
 		<div
 			className="hoobert-positioner"
+			role="presentation"
 			onMouseDown={ ( e ) => {
 				if ( e.target === e.currentTarget ) {
 					onClose();

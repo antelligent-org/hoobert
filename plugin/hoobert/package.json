@@ -7,8 +7,10 @@
   "scripts": {
     "build": "wp-scripts build",
     "start": "wp-scripts start",
-    "lint:js": "wp-scripts lint-js src",
-    "format": "wp-scripts format src",
+    "test": "wp-scripts test-unit-js",
+    "test:watch": "wp-scripts test-unit-js --watch",
+    "lint:js": "wp-scripts lint-js src tests/js",
+    "format": "wp-scripts format src tests/js",
     "bump": "node scripts/bump-version.js"
   },
   "devDependencies": {

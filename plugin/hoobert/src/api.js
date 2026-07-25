@@ -16,6 +16,11 @@ export function config() {
 
 /**
  * Fetch helper that attaches the REST nonce and normalizes errors.
+ *
+ * @param {string} path            Route below the hoobert/v1 root.
+ * @param {Object} options         Request options.
+ * @param {string} options.method  HTTP method.
+ * @param {Object} options.payload JSON body; omitted for GET.
  */
 async function request( path, { method = 'GET', payload } = {} ) {
 	const { root, nonce } = config();
@@ -31,7 +36,7 @@ async function request( path, { method = 'GET', payload } = {} ) {
 	let data = null;
 	try {
 		data = await res.json();
-	} catch ( e ) {
+	} catch {
 		data = null;
 	}
 
@@ -52,6 +57,9 @@ async function request( path, { method = 'GET', payload } = {} ) {
 
 /**
  * POST helper that attaches the REST nonce.
+ *
+ * @param {string} path    Route below the hoobert/v1 root.
+ * @param {Object} payload JSON body.
  */
 function post( path, payload ) {
 	return request( path, { method: 'POST', payload } );

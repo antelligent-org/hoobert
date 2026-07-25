@@ -2,10 +2,10 @@
 /**
  * Loads and indexes the WooCommerce tool set shipped with the plugin.
  *
- * tools.json lives in the plugin root and carries, per tool, an `x-woo` extension
- * describing how to dispatch it against the REST API; the executor reads that
- * mapping. The same tool set is registered with the Fern inference project so the
- * model and the executor stay in sync.
+ * The bundled tools.json lives in the plugin root and carries, per tool, an
+ * `x-woo` extension describing how to dispatch it against the REST API; the
+ * executor reads that mapping. The same tool set is registered with the Fern
+ * inference project so the model and the executor stay in sync.
  *
  * @package Hoobert
  */
@@ -38,6 +38,7 @@ class Hoobert_Tools {
 			return self::$tools;
 		}
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- reading a file shipped inside the plugin, not a remote URL.
 		$decoded     = json_decode( (string) file_get_contents( $path ), true );
 		self::$tools = ( is_array( $decoded ) && isset( $decoded['tools'] ) ) ? $decoded['tools'] : array();
 		return self::$tools;

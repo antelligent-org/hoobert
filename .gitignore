@@ -9,6 +9,10 @@ CLAUDE.local.md
 node_modules/
 plugin/hoobert/build/
 
+# PHP dev dependencies (phpunit, phpcs); never shipped
+vendor/
+.phpunit.result.cache
+
 # OS / editor
 .DS_Store
 *.log

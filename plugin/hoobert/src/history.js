@@ -12,8 +12,10 @@ import { history as fetchHistory } from './api';
 
 /**
  * Format a unix timestamp (seconds) as a short local date-time string.
+ *
+ * @param {number} seconds Unix timestamp; falsy renders as empty.
  */
-function formatTime( seconds ) {
+export function formatTime( seconds ) {
 	if ( ! seconds ) {
 		return '';
 	}
@@ -22,8 +24,10 @@ function formatTime( seconds ) {
 
 /**
  * Render an argument value for display: scalars as-is, objects/arrays as JSON.
+ *
+ * @param {*} value One argument from the recorded request.
  */
-function formatArg( value ) {
+export function formatArg( value ) {
 	if ( value === null || value === undefined ) {
 		return '-';
 	}
@@ -138,8 +142,11 @@ export function HoobertHistoryModal( { onClose } ) {
 	const entries = state.entries || [];
 
 	return (
+		// The backdrop only dismisses; Esc does the same from the keyboard, so it
+		// carries no behaviour of its own for assistive tech to announce.
 		<div
 			className="hoobert-positioner"
+			role="presentation"
 			onMouseDown={ ( e ) => {
 				if ( e.target === e.currentTarget ) {
 					onClose();

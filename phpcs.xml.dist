@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<ruleset name="Hoobert">
+	<description>WordPress coding standards for the PHP that ships in the plugin.</description>
+
+	<!-- Only the files that go in the zip. Tests and stubs follow PHPUnit's
+	     conventions, not WordPress's, so they are out of scope, as are the
+	     provisioning scripts, which run under WP-CLI rather than in the plugin. -->
+	<file>plugin/hoobert/hoobert.php</file>
+	<file>plugin/hoobert/includes</file>
+
+	<arg name="extensions" value="php"/>
+	<arg name="basepath" value="."/>
+	<arg name="parallel" value="8"/>
+	<arg name="colors"/>
+	<arg value="sp"/>
+
+	<config name="minimum_wp_version" value="6.6"/>
+	<config name="testVersion" value="8.0-"/>
+
+	<rule ref="WordPress">
+		<!-- Files are named for the class they hold minus the vendor prefix
+		     (class-executor.php, not class-hoobert-executor.php). -->
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+
+		<!-- Each file holds one class, and its file header documents that class.
+		     A second docblock two lines below would only repeat it. -->
+		<exclude name="Squiz.Commenting.ClassComment.Missing"/>
+
+		<!-- CLAUDE.md asks for terse doc comments covering what a function does
+		     and any non-obvious why. Signatures here are fully typed, so a tag
+		     per parameter restating the type is the filler that rule cuts. The
+		     rest of Squiz.Commenting.FunctionComment still applies, so tags that
+		     are present must name and type the right thing. -->
+		<exclude name="Squiz.Commenting.FunctionComment.MissingParamTag"/>
+
+		<!-- The sniff reads WordPress's own hash notation ("@param array $args {")
+		     as a description ending in a brace, so it cannot be satisfied without
+		     abandoning the notation. Punctuation is not worth that. -->
+		<exclude name="Squiz.Commenting.FunctionComment.ParamCommentFullStop"/>
+	</rule>
+
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="hoobert"/>
+			</property>
+		</properties>
+	</rule>
+
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="Hoobert"/>
+				<element value="HOOBERT"/>
+				<element value="hoobert"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- WooCommerce's capability; the sniff only knows core's. -->
+	<rule ref="WordPress.WP.Capabilities">
+		<properties>
+			<property name="custom_capabilities" type="array">
+				<element value="manage_woocommerce"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- The plugin header declares "Requires PHP: 8.0". -->
+	<rule ref="PHPCompatibilityWP"/>
+</ruleset>

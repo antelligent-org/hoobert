@@ -62,6 +62,9 @@ shippable product: no "demo" framing in code, UI, or docs.
   project; keep the two in sync when tools change.
 - `docker-compose.yml`, `scripts/setup.sh`, `scripts/seed-sample-data.php`,
   `scripts/generate-api-key.php`.
+- `composer.json`, `phpcs.xml.dist`, `phpunit.xml.dist`, `tests/php/` — the PHP
+  toolchain, at the repo root so `plugin/hoobert/` holds only what ships. JS tests
+  live in `plugin/hoobert/tests/js/`, next to the `package.json` that runs them.
 - `assets-src/` — sources for the plugin-directory artwork (owl SVG, banner HTML);
   `.wordpress-org/` — the generated icons/banners plus hand-added screenshots, copied
   to SVN `assets/` on release. Regenerate with `node scripts/build-wporg-assets.mjs`;
@@ -72,22 +75,56 @@ shippable product: no "demo" framing in code, UI, or docs.
   `plugin/hoobert/assets/hoobert-owl.png` for the settings screen, and its Flaticon
   attribution must stay on that screen, in `readme.txt`, and in `README.md`.
 
+## Tests and linting
+
+Two suites, both fast and both runnable without the WordPress stack.
+
+- **PHP** (`tests/php/`) covers the executor's tool-call dispatch and display building,
+  the Fern client's request and response normalization, the settings sanitizer, and
+  contract checks over the shipped `tools.json`. It does **not** boot WordPress: the
+  classes under test are thin adapters over a handful of core functions, so
+  `tests/php/stubs/wordpress.php` stands those in. A function the plugin calls but the
+  stubs do not declare fails loudly by name; that is the cue to decide whether the call
+  belongs in a unit test at all.
+- **JS** (`plugin/hoobert/tests/js/`) covers the `hoobert/v1` fetch wrappers against a
+  mocked `fetch`, and the display helpers. Jest ships inside `@wordpress/scripts`, so
+  there is nothing extra to install. React components are not rendered; the helpers they
+  use are exported and tested directly.
+- **PHPCS** runs the WordPress standard over the PHP that ships. `phpcs.xml.dist`
+  documents every excluded sniff; add to that list only with a reason in the file.
+- **ESLint** is the `@wordpress/scripts` default plus the two adjustments in
+  `eslint.config.cjs`.
+
+Both linters are expected to be clean. When a rule is wrong for this repo, exclude it in
+the config with a comment, not with a scattering of inline suppressions.
+
 ## Shipping to WordPress.org
 
 [`docs/wordpress-org-submission.md`](docs/wordpress-org-submission.md) is the playbook.
 Things to keep in mind when changing anything user-facing:
 
 - **Verify with the real tool, not by eye.** `docker compose run --rm --entrypoint wp
-  wpcli plugin check hoobert --exclude-directories=node_modules,src,scripts,build`.
-  It should report zero errors; the only expected warnings are the naming ones.
+  wpcli plugin check hoobert --exclude-directories=node_modules,src,scripts,build,tests`.
+  It should report zero errors; the only expected warnings are the naming ones. The
+  checker needs the `plugin-check` plugin installed once:
+  `docker compose run --rm --entrypoint wp wpcli plugin install plugin-check --activate`.
 
 ## Commands
 
 ```bash
-# Front-end bundle (run inside plugin/hoobert)
+# Front-end bundle + JS tests (run inside plugin/hoobert)
 npm install
 npm run build        # wp-scripts build
 npm run start        # watch mode
+npm test             # jest
+npm run lint:js      # eslint over src and tests/js
+
+# PHP tests + linting (repo root, no local PHP needed)
+docker compose run --rm php install     # composer install, once
+docker compose run --rm php test        # phpunit
+docker compose run --rm php lint        # phpcs
+docker compose run --rm php lint:fix    # phpcbf, fixes what it can
+docker compose run --rm php check       # lint then test
 
 # Local stack (repo root)
 docker compose up -d                          # up + auto-provision via the wpcli service (idempotent)
@@ -96,8 +133,10 @@ docker compose run --rm wpcli                 # re-run provisioning (e.g. after 
 docker compose run --rm --entrypoint wp wpcli <cmd>   # ad-hoc WP-CLI
 ```
 
-Images are pinned in `docker-compose.yml` (WordPress, MariaDB, WP-CLI) so every contributor
-runs the same versions; bump them deliberately alongside the plugin's "Tested up to" header.
+The `php` service sits behind a `tools` profile, so `docker compose up` never starts it.
+Images are pinned in `docker-compose.yml` (WordPress, MariaDB, WP-CLI, Composer) so every
+contributor runs the same versions; bump them deliberately alongside the plugin's
+"Tested up to" header.
 
 ## Conventions & preferences
 
@@ -108,6 +147,8 @@ runs the same versions; bump them deliberately alongside the plugin's "Tested up
 - **Merge with `--no-ff`.** When the user asks to merge, always create a merge commit (`git merge --no-ff <branch>`), never a fast-forward, even for a single commit that could fast-forward cleanly: it groups the change under one point on `main` and preserves which commits belonged to which branch. Let the message default (`Merge branch '<branch>'`). Delete the local branch afterward (`git branch -d <branch>`). Push only when asked.
 - **Never commit without the user reviewing first**, and only commit when explicitly asked. Push only when asked.
 - Always make a **new commit** for follow-ups — never `git commit --amend`, even after review.
+- **Run the tests and linters for whatever you touched before asking for review.** PHP changes take `docker compose run --rm php check`; front-end changes take `npm test` and `npm run lint:js` inside `plugin/hoobert`, plus `npm run build`. Report what you ran and what it said. If a check does not fit the change, skip it and say why; never claim a check passed that you did not run.
+- **A change to behavior should come with a test.** The suites are cheap to extend, and a fix without one invites the same regression back.
 
 **Code style**
 - Document exported/non-trivial functions and file headers with **block doc comments** (`/** … */` in JS; `/** … */` PHPDoc in PHP), covering what it does and any non-obvious *why*. Keep them terse. Inline `//` comments are fine inside a body.

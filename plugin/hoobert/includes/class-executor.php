@@ -221,8 +221,8 @@ class Hoobert_Executor {
 	private static function interpolate( string $template, array $data ): string {
 		return preg_replace_callback(
 			'/\{([a-z0-9_.]+)\}/i',
-			static function ( $match ) use ( $data ) {
-				$value = self::dot_get( $data, $match[1] );
+			static function ( $token ) use ( $data ) {
+				$value = self::dot_get( $data, $token[1] );
 				return is_scalar( $value ) ? (string) $value : '';
 			},
 			$template

@@ -61,7 +61,7 @@ Fetch an issue from this repo on GitHub, summarize it, and help start work.
 
 7. **Create a feature branch.** Before the first commit, create a branch for this issue and do all the work there. Don't ask, and don't commit to `main`.
 
-   This is the one place the repo departs from CLAUDE.md, which otherwise says to commit directly to `main`. Issue work branches so the tracker, the branch, and the merge commit line up, and so a half-finished series never sits on `main`. Everything else in CLAUDE.md still applies: the user reviews before every commit, you commit only when asked, and you never `--amend`.
+   CLAUDE.md already requires a feature branch for every change. Issue work only narrows the naming, so the tracker, the branch, and the merge commit line up. Everything else in CLAUDE.md still applies: the user reviews before every commit, you commit only when asked, and you never `--amend`.
 
    Name the branch `<type>/<issue-number>-<slug>`:
    - **`<type>`** is the conventional-commit type that fits the issue (`fix`, `feat`, `chore`, `refactor`, `docs`, `ci`), inferred from its labels and nature.
@@ -70,14 +70,24 @@ Fetch an issue from this repo on GitHub, summarize it, and help start work.
 
    For example, issue 2 titled "Page context never reaches the model" becomes `fix/2-page-context-never-reaches-model`. Create it with `git checkout -b <branch>` and stay on it for the rest of the work.
 
-8. **Verify with the real tools before committing.** This repo has no unit-test suite, so verification is the build plus the WordPress plugin checker plus a run against the local stack. Match the checks to what you touched:
+8. **Cover the change with a test.** Both suites are described in CLAUDE.md → *Tests and linting*. A bug fix gets a test that fails before it and passes after; a new behavior gets a test for the behavior. Put PHP tests in `tests/php/` and JS tests in `plugin/hoobert/tests/js/`, following the neighbouring files.
 
-   - **Front-end (`plugin/hoobert/src/**`)**: run `npm run build` inside `plugin/hoobert` and confirm it succeeds. `npm run lint:js` on top when the change is non-trivial.
-   - **PHP (`plugin/hoobert/includes/**`, `hoobert.php`)**: no linter is wired up, so read the diff against the PHP rules in CLAUDE.md (ABSPATH guard, escaped output, `manage_woocommerce` on admin routes).
+   Skip this only when the change has nothing to assert on (docs, copy, artwork, build config) and say so. If the code you touched cannot be tested without booting WordPress, say that too rather than stubbing your way to a test that only exercises the stubs.
+
+9. **Verify with the real tools before committing.** Match the checks to what you touched:
+
+   - **PHP (`plugin/hoobert/includes/**`, `hoobert.php`)**: run both, from the repo root:
+
+     ```bash
+     docker compose run --rm php check
+     ```
+
+     That is phpcs then phpunit. Zero violations and a green suite are the bar. On a first run in a fresh clone, `docker compose run --rm php install` first.
+   - **Front-end (`plugin/hoobert/src/**`)**: inside `plugin/hoobert`, run `npm test`, `npm run lint:js`, and `npm run build`. All three should be clean.
    - **Anything user-facing** (UI copy, `readme.txt`, settings screen, assets): run the plugin checker, which CLAUDE.md treats as the source of truth over eyeballing:
 
      ```bash
-     docker compose run --rm --entrypoint wp wpcli plugin check hoobert --exclude-directories=node_modules,src,scripts,build
+     docker compose run --rm --entrypoint wp wpcli plugin check hoobert --exclude-directories=node_modules,src,scripts,build,tests
      ```
 
      Zero errors expected; the naming warnings are the only known ones.
@@ -85,7 +95,9 @@ Fetch an issue from this repo on GitHub, summarize it, and help start work.
 
    If a check does not fit the change, skip it and say briefly why. Do not skip silently, and do not claim a check passed that you did not run.
 
-9. **Close the issue from the commit.** Put the closing footer on **exactly one** commit, the one you make once you judge the work complete. Don't try to predict which commit is literally last; its position doesn't matter. GitHub scans commit messages landing on the default branch and auto-closes the issue if any one of them carries the keyword, so a single occurrence anywhere on the branch keeps the tracker in sync and repeating it is noise.
+   When a linter flags existing code your change did not cause, fix it or exclude the sniff in `phpcs.xml.dist` / `eslint.config.cjs` with a comment saying why. Do not leave the command red for the next person, and do not silence it with a scattering of inline suppressions.
+
+10. **Close the issue from the commit.** Put the closing footer on **exactly one** commit, the one you make once you judge the work complete. Don't try to predict which commit is literally last; its position doesn't matter. GitHub scans commit messages landing on the default branch and auto-closes the issue if any one of them carries the keyword, so a single occurrence anywhere on the branch keeps the tracker in sync and repeating it is noise.
 
    The moment you decide the issue is resolved is also when you can judge the footer correctly: `Closes #<number>` if the work fully resolves the issue, `Refs #<number>` if it only partially addresses it (links without closing). Put it on its own line, before the `Co-Authored-By` trailer.
 
@@ -93,7 +105,7 @@ Fetch an issue from this repo on GitHub, summarize it, and help start work.
 
    Note that auto-close fires on push, not on the local merge. Until the merge commit reaches `origin/main`, the issue stays open.
 
-10. **Merge into `main` with `--no-ff`.** When the user asks to merge, always create a merge commit, `git merge --no-ff <branch>`, never a fast-forward, even when the branch is a single commit that could fast-forward cleanly. The merge commit groups the issue's commits under one point on `main` and preserves which commits belonged to which issue. Let the message default (`Merge branch '<branch>'`). Delete the local branch afterward (`git branch -d <branch>`). Push only when the user asks.
+11. **Merge into `main` with `--no-ff`.** When the user asks to merge, always create a merge commit, `git merge --no-ff <branch>`, never a fast-forward, even when the branch is a single commit that could fast-forward cleanly. The merge commit groups the issue's commits under one point on `main` and preserves which commits belonged to which issue. Let the message default (`Merge branch '<branch>'`). Delete the local branch afterward (`git branch -d <branch>`). Push only when the user asks.
 
 ## Code comments
 

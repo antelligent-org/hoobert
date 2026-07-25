@@ -58,7 +58,11 @@ class Hoobert_Fern_Client {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			return array( 'ok' => false, 'calls' => array(), 'error' => $response->get_error_message() );
+			return array(
+				'ok'    => false,
+				'calls' => array(),
+				'error' => $response->get_error_message(),
+			);
 		}
 
 		$code    = wp_remote_retrieve_response_code( $response );

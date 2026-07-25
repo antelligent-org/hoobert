@@ -84,6 +84,31 @@ services:
       - ./scripts:/scripts
     entrypoint: ["/bin/sh", "/scripts/setup.sh"]
 
+  # PHP toolchain: composer, phpunit, phpcs. Kept behind the `tools` profile so
+  # `docker compose up` never starts it, and pointed at the repo rather than the
+  # running site, since the unit tests stub WordPress instead of booting it. The
+  # tooling lives at the repo root so the plugin directory holds only what ships.
+  #
+  #   docker compose run --rm php install    # composer install
+  #   docker compose run --rm php test       # phpunit
+  #   docker compose run --rm php lint       # phpcs
+  #   docker compose run --rm php check      # both
+  php:
+    image: composer:2.8.12
+    profiles: ["tools"]
+    restart: "no"
+    working_dir: /app
+    environment:
+      COMPOSER_HOME: /tmp/composer
+      # Nothing depends on this package, so its version is arbitrary; setting it
+      # only silences composer's "could not detect the root package" notice.
+      COMPOSER_ROOT_VERSION: "1.0.0"
+    volumes:
+      - .:/app
+      - composer_cache:/tmp/composer
+    entrypoint: ["composer", "--no-interaction"]
+
 volumes:
   db_data:
   wp_data:
+  composer_cache:

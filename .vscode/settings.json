@@ -1,0 +1,25 @@
+{
+	// The plugin formats with wp-prettier, a fork of prettier carrying the
+	// `parenSpacing` option behind WordPress's `foo( bar )` style. The extension
+	// otherwise falls back to its bundled stock prettier, which ignores that
+	// option and reformats every call site into a lint error.
+	"prettier.prettierPath": "plugin/hoobert/node_modules/prettier",
+
+	// Format with Prettier where Prettier owns the style. PHP is left alone: it
+	// follows the WordPress standard, enforced by phpcs.
+	"[javascript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[javascriptreact]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[json]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[jsonc]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[css]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	}
+}

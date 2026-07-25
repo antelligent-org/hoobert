@@ -111,7 +111,7 @@ class Hoobert_History {
 	 */
 	public static function recent( int $limit = self::PANEL_LIMIT, int $user_id = 0 ): array {
 		global $wpdb;
-		$user_id = $user_id ?: get_current_user_id();
+		$user_id = $user_id > 0 ? $user_id : get_current_user_id();
 		if ( ! $user_id ) {
 			return array();
 		}
@@ -126,7 +126,7 @@ class Hoobert_History {
 			),
 			ARRAY_A
 		);
-		return array_map( array( __CLASS__, 'format_row' ), $rows ?: array() );
+		return array_map( array( __CLASS__, 'format_row' ), is_array( $rows ) ? $rows : array() );
 	}
 
 	/**
@@ -150,7 +150,7 @@ class Hoobert_History {
 			),
 			ARRAY_A
 		);
-		return array_map( array( __CLASS__, 'format_row' ), $rows ?: array() );
+		return array_map( array( __CLASS__, 'format_row' ), is_array( $rows ) ? $rows : array() );
 	}
 
 	/**

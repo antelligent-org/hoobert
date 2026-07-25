@@ -21,7 +21,10 @@ module.exports = [
 		rules: {
 			// Components document their props with one @param {Object} props
 			// block; a tag per destructured key only repeats the signature.
-			'jsdoc/require-param': [ 'error', { checkDestructured: false, checkDestructuredRoots: false } ],
+			'jsdoc/require-param': [
+				'error',
+				{ checkDestructured: false, checkDestructuredRoots: false },
+			],
 		},
 	},
 ];

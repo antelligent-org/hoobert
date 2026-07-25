@@ -104,6 +104,15 @@ Two suites, both fast and both runnable without the WordPress stack.
 Both linters are expected to be clean. When a rule is wrong for this repo, exclude it in
 the config with a comment, not with a scattering of inline suppressions.
 
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs all of it on every pull
+request and on `main`: PHP on 8.0 and 8.4, then JS lint, tests, and a build. Run the
+checks locally first anyway; CI is the backstop, not the first look.
+
+`composer.json` pins `config.platform.php` to `8.0`, the floor the plugin header
+declares, so the lock resolves to versions that install on every supported PHP rather
+than on whatever the container happens to run. Both CI legs install the same locked
+versions; only the runtime differs.
+
 ## Shipping to WordPress.org
 
 [`docs/wordpress-org-submission.md`](docs/wordpress-org-submission.md) is the playbook.

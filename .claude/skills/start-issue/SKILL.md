@@ -95,6 +95,8 @@ Fetch an issue from this repo on GitHub, summarize it, and help start work.
 
    If a check does not fit the change, skip it and say briefly why. Do not skip silently, and do not claim a check passed that you did not run.
 
+   CI runs the PHP and JS legs again on the pull request, so anything skipped here surfaces there. That is the backstop, not a substitute for running them.
+
    When a linter flags existing code your change did not cause, fix it or exclude the sniff in `phpcs.xml.dist` / `eslint.config.cjs` with a comment saying why. Do not leave the command red for the next person, and do not silence it with a scattering of inline suppressions.
 
 10. **Close the issue from the commit.** Put the closing footer on **exactly one** commit, the one you make once you judge the work complete. Don't try to predict which commit is literally last; its position doesn't matter. GitHub scans commit messages landing on the default branch and auto-closes the issue if any one of them carries the keyword, so a single occurrence anywhere on the branch keeps the tracker in sync and repeating it is noise.

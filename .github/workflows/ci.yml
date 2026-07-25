@@ -1,0 +1,75 @@
+name: CI
+
+# The same checks CLAUDE.md asks for before review, run on every pull request
+# and on main. Release work lives in release.yml; nothing here publishes.
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+# A new push supersedes the run in flight for the same branch.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  php:
+    name: PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor the plugin header declares, and a current release. composer
+        # resolves against 8.0 either way (config.platform), so both legs install
+        # the same locked versions and only the runtime differs.
+        php: ['8.0', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          tools: composer:v2
+
+      # 34 dev packages install in seconds, so this skips a cache and the extra
+      # action that would manage it.
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress
+
+      # phpcs then phpunit, the same `composer check` developers run locally.
+      - name: Lint and test
+        run: composer check
+
+  js:
+    name: JavaScript
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugin/hoobert
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: plugin/hoobert/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint:js
+
+      - name: Test
+        run: npm test
+
+      # The bundle is what ships, so a change that lints and passes but fails to
+      # compile should not reach main.
+      - name: Build
+        run: npm run build

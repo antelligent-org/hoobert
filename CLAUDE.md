@@ -102,7 +102,7 @@ runs the same versions; bump them deliberately alongside the plugin's "Tested up
 ## Conventions & preferences
 
 **Git**
-- Commit **directly to `main`** — no feature branches.
+- Commit **directly to `main`** — no feature branches. Exception: issue-driven work branches as `<type>/<issue-number>-<slug>` and merges back with `--no-ff`; the `start-issue` skill owns that workflow.
 - **Never commit without the user reviewing first**, and only commit when explicitly asked. Push only when asked.
 - Always make a **new commit** for follow-ups — never `git commit --amend`, even after review.
 - [Conventional Commits](https://www.conventionalcommits.org/): `type: lowercase imperative description`. Types: `feat`, `fix`, `refactor`, `chore`, `ci`, `docs`. Confirm state with `git status`/`git diff` before committing.

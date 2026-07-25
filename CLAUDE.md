@@ -93,7 +93,13 @@ Two suites, both fast and both runnable without the WordPress stack.
 - **PHPCS** runs the WordPress standard over the PHP that ships. `phpcs.xml.dist`
   documents every excluded sniff; add to that list only with a reason in the file.
 - **ESLint** is the `@wordpress/scripts` default plus the two adjustments in
-  `eslint.config.cjs`.
+  `eslint.config.cjs`. It enforces Prettier through `prettier/prettier`, so
+  formatting is a lint error, not a preference.
+- **Prettier** is configured at the repo root so editors find it from any file.
+  `prettier.config.js` re-exports `@wordpress/prettier-config` rather than
+  restating it; keep it that way, or the editor and ESLint will disagree. Note the
+  installed `prettier` is `wp-prettier`, a fork carrying WordPress's `foo( bar )`
+  spacing, which `.vscode/settings.json` points the VS Code extension at.
 
 Both linters are expected to be clean. When a rule is wrong for this repo, exclude it in
 the config with a comment, not with a scattering of inline suppressions.

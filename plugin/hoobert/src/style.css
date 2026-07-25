@@ -11,19 +11,20 @@
 	align-items: flex-start;
 	justify-content: center;
 	padding-top: 14vh;
-	background: rgba( 15, 18, 20, 0.55 );
+	background: rgba(15, 18, 20, 0.55);
 	z-index: 100000;
 }
 
 .hoobert-animator {
 	width: 620px;
-	max-width: calc( 100vw - 32px );
+	max-width: calc(100vw - 32px);
 	background: #1c2024;
 	color: #eef1f3;
 	border-radius: 14px;
 	overflow: hidden;
-	box-shadow: 0 20px 70px rgba( 0, 0, 0, 0.45 );
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	box-shadow: 0 20px 70px rgba(0, 0, 0, 0.45);
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+		sans-serif;
 }
 
 /* --- Flow modal header --- */
@@ -32,7 +33,7 @@
 	padding: 16px 20px;
 	font-size: 15px;
 	color: #eef1f3;
-	border-bottom: 1px solid rgba( 255, 255, 255, 0.08 );
+	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .hoobert-flow-head .q {
@@ -70,7 +71,7 @@
 	display: inline-block;
 	padding: 3px 8px;
 	font-size: 13px;
-	background: rgba( 123, 182, 97, 0.16 );
+	background: rgba(123, 182, 97, 0.16);
 	color: #a7d98d;
 	border-radius: 6px;
 }
@@ -83,7 +84,7 @@
 	overflow: auto;
 	font-size: 12px;
 	line-height: 1.5;
-	background: rgba( 0, 0, 0, 0.28 );
+	background: rgba(0, 0, 0, 0.28);
 	border-radius: 8px;
 	white-space: pre-wrap;
 	word-break: break-word;
@@ -136,13 +137,13 @@
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
 	color: #8a939b;
-	border-bottom: 1px solid rgba( 255, 255, 255, 0.12 );
+	border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .hoobert-table td {
 	padding: 8px 10px;
 	color: #eef1f3;
-	border-bottom: 1px solid rgba( 255, 255, 255, 0.06 );
+	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 /* --- Merchant-facing field list (single object) --- */
@@ -175,7 +176,7 @@
 	padding: 8px 16px;
 	font-size: 13px;
 	color: #eef1f3;
-	background: rgba( 255, 255, 255, 0.08 );
+	background: rgba(255, 255, 255, 0.08);
 	border: 0;
 	border-radius: 8px;
 	cursor: pointer;
@@ -192,7 +193,7 @@
 .hoobert-debug {
 	margin-top: 16px;
 	padding-top: 12px;
-	border-top: 1px solid rgba( 255, 255, 255, 0.08 );
+	border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .hoobert-debug summary {
@@ -242,7 +243,7 @@
 
 .hoobert-history-item {
 	padding: 12px 0;
-	border-bottom: 1px solid rgba( 255, 255, 255, 0.06 );
+	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .hoobert-history-item:first-child {
@@ -276,12 +277,12 @@
 }
 
 .hoobert-badge.is-ok {
-	background: rgba( 123, 182, 97, 0.16 );
+	background: rgba(123, 182, 97, 0.16);
 	color: #a7d98d;
 }
 
 .hoobert-badge.is-error {
-	background: rgba( 224, 115, 107, 0.16 );
+	background: rgba(224, 115, 107, 0.16);
 	color: #e0736b;
 }
 

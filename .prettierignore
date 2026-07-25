@@ -1,0 +1,16 @@
+# Files an editor should never reformat on save.
+# Prettier skips node_modules on its own.
+
+# Build output and dependencies.
+plugin/hoobert/build/
+vendor/
+
+# Generated or externally owned; reformatting these produces noise, not diffs.
+CHANGELOG.md
+composer.lock
+package-lock.json
+.wordpress-org/
+
+# The shipped tool set is hand-edited and kept in sync with the canonical copy in
+# the Fernfly project. Reformatting it would rewrite the whole file.
+plugin/hoobert/tools.json

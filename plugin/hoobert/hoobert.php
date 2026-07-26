@@ -3,7 +3,7 @@
  * Plugin Name:       Hoobert
  * Plugin URI:        https://hoobert.fernfly.com
  * Description:       Agentic command bar for WooCommerce merchants. Get stuff done at the speed of thought.
- * Version:           0.2.1
+ * Version:           0.2.2
  * Requires at least: 6.6
  * Requires PHP:      8.0
  * Requires Plugins:  woocommerce
@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // No direct access.
 }
 
-define( 'HOOBERT_VERSION', '0.2.1' );
+define( 'HOOBERT_VERSION', '0.2.2' );
 define( 'HOOBERT_PATH', plugin_dir_path( __FILE__ ) );
 define( 'HOOBERT_URL', plugin_dir_url( __FILE__ ) );
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/antelligent-org/hoobert/compare/v0.2.1...v0.2.2) (2026-07-26)
+
+
+### Bug Fixes
+
+* enqueue the settings page styles instead of inlining them ([10a404f](https://github.com/antelligent-org/hoobert/commit/10a404f393e96b0d8654b59baf76ddbf5a071a1f))
+
 ## [0.2.1](https://github.com/antelligent-org/hoobert/compare/v0.2.0...v0.2.1) (2026-07-25)
 
 

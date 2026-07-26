@@ -56,14 +56,31 @@ class Hoobert_Test_State {
 	public static array $http_requests = array();
 
 	/**
+	 * Hook suffix add_submenu_page() hands back. False models a user who cannot
+	 * see the page.
+	 *
+	 * @var string|false
+	 */
+	public static $submenu_hook = 'woocommerce_page_hoobert';
+
+	/**
+	 * Style handles passed to wp_enqueue_style(), in order.
+	 *
+	 * @var array<int,string>
+	 */
+	public static array $enqueued_styles = array();
+
+	/**
 	 * Clear all state. Call from setUp().
 	 */
 	public static function reset(): void {
-		self::$options       = array();
-		self::$http_handler  = null;
-		self::$rest_handler  = null;
-		self::$rest_requests = array();
-		self::$http_requests = array();
+		self::$options         = array();
+		self::$http_handler    = null;
+		self::$rest_handler    = null;
+		self::$rest_requests   = array();
+		self::$http_requests   = array();
+		self::$submenu_hook    = 'woocommerce_page_hoobert';
+		self::$enqueued_styles = array();
 	}
 }
 
@@ -249,6 +266,25 @@ function get_option( string $name, $default_value = false ) {
 function update_option( string $name, $value ): bool {
 	Hoobert_Test_State::$options[ $name ] = $value;
 	return true;
+}
+
+/**
+ * Registers the settings screen. Core returns the new page's hook suffix, or
+ * false when the current user lacks the capability.
+ *
+ * @param callable|string $callback Render callback.
+ * @return string|false
+ */
+function add_submenu_page( string $parent, string $page_title, string $menu_title, string $capability, string $slug, $callback = '' ) {
+	return Hoobert_Test_State::$submenu_hook;
+}
+
+/**
+ * @param string[] $deps Dependency handles.
+ * @param string|bool|null $version Version string.
+ */
+function wp_enqueue_style( string $handle, string $src = '', array $deps = array(), $version = false, string $media = 'all' ): void {
+	Hoobert_Test_State::$enqueued_styles[] = $handle;
 }
 
 /**

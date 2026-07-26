@@ -1,0 +1,37 @@
+/**
+ * Styles for the Hoobert settings screen (WooCommerce -> Hoobert).
+ *
+ * Enqueued by Hoobert_Settings::enqueue_assets(), and only on that screen. The
+ * command bar itself is styled by build/style-index.css, which is a separate
+ * bundle because it loads on every admin screen.
+ */
+
+.hoobert-title {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.hoobert-credit {
+	margin-top: 32px;
+	color: #646970;
+	font-size: 12px;
+}
+
+/* Argument JSON in the command history table. */
+.hoobert-args {
+	white-space: pre-wrap;
+	margin: 6px 0 0;
+}
+
+.hoobert-result {
+	font-weight: 600;
+}
+
+.hoobert-result-ok {
+	color: #207b28;
+}
+
+.hoobert-result-failed {
+	color: #b32d2e;
+}

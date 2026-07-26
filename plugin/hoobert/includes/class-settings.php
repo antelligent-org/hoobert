@@ -18,12 +18,40 @@ class Hoobert_Settings {
 	const OPTION_NAME  = 'hoobert_options';
 
 	/**
+	 * Hook suffix of the settings screen, as returned by add_submenu_page().
+	 * Used to enqueue the screen's stylesheet on that screen only.
+	 *
+	 * @var string
+	 */
+	private static string $hook_suffix = '';
+
+	/**
 	 * Wire up the admin menu + registered settings.
 	 */
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'menu' ) );
 		add_action( 'admin_init', array( __CLASS__, 'register' ) );
 		add_action( 'admin_init', array( __CLASS__, 'privacy_policy_content' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
+	}
+
+	/**
+	 * Enqueue the settings-screen stylesheet, and only there. Everything this
+	 * screen needs is static CSS, so it ships as a file rather than inline.
+	 *
+	 * @param string $hook Current admin screen's hook suffix.
+	 */
+	public static function enqueue_assets( $hook ): void {
+		if ( '' === self::$hook_suffix || $hook !== self::$hook_suffix ) {
+			return;
+		}
+
+		wp_enqueue_style(
+			'hoobert-admin',
+			HOOBERT_URL . 'assets/admin.css',
+			array(),
+			HOOBERT_VERSION
+		);
 	}
 
 	/**
@@ -68,7 +96,7 @@ class Hoobert_Settings {
 	 * Add the settings screen under the WooCommerce menu.
 	 */
 	public static function menu(): void {
-		add_submenu_page(
+		$hook = add_submenu_page(
 			'woocommerce',
 			__( 'Hoobert', 'hoobert' ),
 			__( 'Hoobert', 'hoobert' ),
@@ -76,6 +104,9 @@ class Hoobert_Settings {
 			'hoobert',
 			array( __CLASS__, 'render' )
 		);
+
+		// False when the current user cannot see the page; there is then no screen to style.
+		self::$hook_suffix = is_string( $hook ) ? $hook : '';
 	}
 
 	/**
@@ -121,10 +152,6 @@ class Hoobert_Settings {
 				<img src="<?php echo esc_url( HOOBERT_URL . 'assets/hoobert-owl.png' ); ?>" alt="" width="40" height="40" />
 				<?php esc_html_e( 'Hoobert', 'hoobert' ); ?>
 			</h1>
-			<style>
-				.hoobert-title { display: flex; align-items: center; gap: 10px; }
-				.hoobert-credit { margin-top: 32px; color: #646970; font-size: 12px; }
-			</style>
 			<div class="card">
 				<p><strong><?php esc_html_e( 'Run your whole store from one prompt.', 'hoobert' ); ?></strong></p>
 				<p>
@@ -268,15 +295,15 @@ class Hoobert_Settings {
 							<?php if ( ! empty( $params ) ) : ?>
 								<details>
 									<summary><?php esc_html_e( 'Arguments', 'hoobert' ); ?></summary>
-									<pre style="white-space:pre-wrap;margin:6px 0 0;"><?php echo esc_html( (string) wp_json_encode( $params, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) ); ?></pre>
+									<pre class="hoobert-args"><?php echo esc_html( (string) wp_json_encode( $params, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) ); ?></pre>
 								</details>
 							<?php endif; ?>
 						</td>
 						<td>
 							<?php if ( $entry['ok'] ) : ?>
-								<span style="color:#207b28;font-weight:600;"><?php esc_html_e( 'Success', 'hoobert' ); ?></span>
+								<span class="hoobert-result hoobert-result-ok"><?php esc_html_e( 'Success', 'hoobert' ); ?></span>
 							<?php else : ?>
-								<span style="color:#b32d2e;font-weight:600;">
+								<span class="hoobert-result hoobert-result-failed">
 									<?php
 									/* translators: %d: HTTP status code. */
 									echo esc_html( $entry['status'] ? sprintf( __( 'Failed (%d)', 'hoobert' ), $entry['status'] ) : __( 'Failed', 'hoobert' ) );

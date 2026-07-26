@@ -83,4 +83,29 @@ class SettingsTest extends HoobertTestCase {
 
 		$this->assertSame( array( 'endpoint' => '', 'api_key' => '' ), $saved );
 	}
+
+	public function test_the_stylesheet_is_enqueued_on_the_settings_screen(): void {
+		Hoobert_Settings::menu();
+
+		Hoobert_Settings::enqueue_assets( 'woocommerce_page_hoobert' );
+
+		$this->assertSame( array( 'hoobert-admin' ), Hoobert_Test_State::$enqueued_styles );
+	}
+
+	public function test_the_stylesheet_is_not_enqueued_on_other_screens(): void {
+		Hoobert_Settings::menu();
+
+		Hoobert_Settings::enqueue_assets( 'index.php' );
+
+		$this->assertSame( array(), Hoobert_Test_State::$enqueued_styles );
+	}
+
+	public function test_nothing_is_enqueued_when_the_menu_page_was_not_added(): void {
+		Hoobert_Test_State::$submenu_hook = false;
+		Hoobert_Settings::menu();
+
+		Hoobert_Settings::enqueue_assets( '' );
+
+		$this->assertSame( array(), Hoobert_Test_State::$enqueued_styles );
+	}
 }

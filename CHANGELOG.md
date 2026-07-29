@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.3](https://github.com/antelligent-org/hoobert/compare/v0.2.2...v0.2.3) (2026-07-29)
+
+
+### Bug Fixes
+
+* drop the invalid "self" install step from the preview blueprint ([ac52fe2](https://github.com/antelligent-org/hoobert/commit/ac52fe2745dab1b98d5b0a20aa704f837ca89677))
+
+
+### Documentation
+
+* document the manual wordpress.org publish ([4f71083](https://github.com/antelligent-org/hoobert/commit/4f71083df7cfd560f1b122326e7feb66e2906989))
+
 ## [0.2.2](https://github.com/antelligent-org/hoobert/compare/v0.2.1...v0.2.2) (2026-07-26)
 
 

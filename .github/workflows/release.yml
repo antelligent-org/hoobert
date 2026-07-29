@@ -148,6 +148,13 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload "$RELEASE_TAG" hoobert.zip --clobber
 
+      # The deploy action falls back to deriving the version from GITHUB_REF,
+      # which on a manual run is `refs/heads/main` rather than a tag. Pass it
+      # explicitly. The `v` has to come off: wp.org tag directories carry no
+      # prefix, and readme.txt's Stable tag has to match the directory name.
+      - name: Resolve the published version
+        run: echo "PLUGIN_VERSION=${RELEASE_TAG#v}" >> "$GITHUB_ENV"
+
       # Publish to the WordPress.org directory: `trunk`, a version tag, and the
       # directory assets (icons, banner, screenshots, preview blueprint) from
       # .wordpress-org. Skipped when the credentials are absent, which a manual
@@ -159,5 +166,6 @@ jobs:
           SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
           SLUG: hoobert
+          VERSION: ${{ env.PLUGIN_VERSION }}
           BUILD_DIR: dist/hoobert
           ASSETS_DIR: .wordpress-org

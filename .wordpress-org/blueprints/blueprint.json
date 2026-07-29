@@ -24,15 +24,6 @@
       }
     },
     {
-      "step": "installPlugin",
-      "pluginData": {
-        "resource": "self"
-      },
-      "options": {
-        "activate": true
-      }
-    },
-    {
       "step": "setSiteOptions",
       "options": {
         "blogname": "Hoobert Demo Store",

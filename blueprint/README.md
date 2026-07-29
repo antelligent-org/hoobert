@@ -15,12 +15,29 @@ One click gives you:
 4. Hoobert installed and activated.
 5. You land on the Hoobert settings page (**WooCommerce -> Hoobert**).
 
+## The two copies
+
+This file is the blueprint you launch by hand. A second copy lives at
+[`.wordpress-org/blueprints/blueprint.json`](../.wordpress-org/blueprints/blueprint.json)
+and drives the **Live Preview** button on the plugin directory listing; the release
+workflow copies it to SVN `assets/`. They differ in one way that matters: the directory
+copy must **not** install Hoobert itself. WordPress.org appends its own `installPlugin`
+step for the reviewed version and serves the result, so a hand-written step for Hoobert
+would install it twice, and there is no `"resource": "self"` in the Blueprint schema.
+Everything else (WooCommerce, site options, the seeder) stays in both.
+
+Validate a change against the schema before pushing it:
+
+```bash
+curl -sS https://playground.wordpress.net/blueprint-schema.json -o /tmp/blueprint-schema.json
+npx ajv-cli validate -s /tmp/blueprint-schema.json -d blueprint/blueprint.json
+```
+
 ## Before you share it
 
-- The plugin URL points at the `v0.1.0` GitHub release asset
-  (`https://github.com/antelligent-org/hoobert/releases/download/v0.1.0/hoobert.zip`). That asset
-  exists once the **Release plugin zip** workflow has been run for that tag. Bump the tag in
-  the URL when you cut a new release.
+- The plugin URL points at `releases/latest/download/hoobert.zip`, which the **Release
+  plugin zip** workflow attaches to each release. Pin it to a specific tag if you need
+  the demo frozen on one version.
 - The seeder is fetched at launch from `scripts/seed-sample-data.php` on the `main` branch
   (via the `writeFile` step), so `features.networking` must stay `true`. If you pin the
   blueprint to a release tag, point that URL at the same tag.

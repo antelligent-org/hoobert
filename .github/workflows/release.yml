@@ -3,17 +3,31 @@ name: Release
 # Conventional-commit driven releases. Pushing to main keeps a "chore: release
 # x.y.z" PR up to date; merging that PR tags the release and publishes the
 # plugin zip that the Playground blueprint installs.
+#
+# The manual trigger republishes an existing tag. Without it the WordPress.org
+# deploy could only ever fire on the one push that created the release, so a
+# transient SVN failure or a credential added late could only be recovered by
+# cutting a new version.
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag to publish to WordPress.org (e.g. v0.2.2)'
+        required: true
+        type: string
 
 permissions:
   contents: write
   pull-requests: write
 
 jobs:
+  # A manual run targets a tag that already exists, so there is no release to
+  # cut and nothing for release-please to do.
   release-please:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
       pr_branch: ${{ steps.release.outputs.pr && fromJSON(steps.release.outputs.pr).headBranchName || '' }}
@@ -59,17 +73,36 @@ jobs:
           git commit -am "chore: sync plugin version markers"
           git push
 
-  # Runs only on the push created by merging the release PR.
+  # Runs on the push created by merging the release PR, or on a manual run
+  # against a tag that already exists. `!cancelled()` is what lets it start at
+  # all when release-please was skipped; a failed release-please still leaves
+  # `release_created` empty, so a push can't slip through.
   publish:
     needs: release-please
-    if: needs.release-please.outputs.release_created == 'true'
+    if: >-
+      !cancelled()
+      && ( needs.release-please.outputs.release_created == 'true'
+      || github.event_name == 'workflow_dispatch' )
     runs-on: ubuntu-latest
     # Step-level `if` can't read `secrets`, so decide here whether the
     # WordPress.org leg of the release is wired up yet.
     env:
       HAS_WPORG_CREDENTIALS: ${{ secrets.SVN_USERNAME != '' && secrets.SVN_PASSWORD != '' }}
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || needs.release-please.outputs.tag_name }}
     steps:
+      # A manual run exists to publish, so a silently skipped deploy is the
+      # exact failure this trigger was added to fix. Fail before the build.
+      - name: Require WordPress.org credentials on a manual run
+        if: github.event_name == 'workflow_dispatch' && env.HAS_WPORG_CREDENTIALS != 'true'
+        run: |
+          echo "SVN_USERNAME and SVN_PASSWORD must be set as repository secrets." >&2
+          exit 1
+
+      # Build the tag's own code, not the branch tip. On a push these are the
+      # same commit, since release-please tags the commit being built.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
 
       - uses: actions/setup-node@v4
         with:
@@ -100,23 +133,25 @@ jobs:
             LICENSE \
             dist/hoobert/
           # wp.org rejects hidden files outright; strip any that rode along.
-          find dist -name '.DS_Store' -o -name '._*' -delete
+          # The group matters: without it `-delete` binds only to the last -name.
+          find dist \( -name '.DS_Store' -o -name '._*' \) -delete
 
       - name: Create zip
         working-directory: dist
         run: zip -r ../hoobert.zip hoobert
 
       # The blueprint installs from `releases/latest/download/hoobert.zip`, so
-      # the asset must land on the release release-please just created.
+      # the asset must land on the release for this tag. `--clobber` is what
+      # makes a manual re-publish idempotent.
       - name: Attach zip to the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "${{ needs.release-please.outputs.tag_name }}" hoobert.zip --clobber
+        run: gh release upload "$RELEASE_TAG" hoobert.zip --clobber
 
-      # Publish to the WordPress.org directory. Inert until the plugin has been
-      # approved and the SVN credentials are added as repository secrets, so it
-      # is safe to keep enabled from the first release onwards. Directory assets
-      # (icons, banner, screenshots, preview blueprint) come from .wordpress-org.
+      # Publish to the WordPress.org directory: `trunk`, a version tag, and the
+      # directory assets (icons, banner, screenshots, preview blueprint) from
+      # .wordpress-org. Skipped when the credentials are absent, which a manual
+      # run has already turned into a hard failure above.
       - name: Deploy to WordPress.org
         if: env.HAS_WPORG_CREDENTIALS == 'true'
         uses: 10up/action-wordpress-plugin-deploy@stable

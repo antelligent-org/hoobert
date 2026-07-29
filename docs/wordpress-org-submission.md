@@ -48,6 +48,23 @@ It rasterises through headless Chrome, so there are no npm dependencies. Set
 | `.wordpress-org/screenshot-1..7.png`       | any      | shot by hand, see below      | done   |
 | `.wordpress-org/blueprints/blueprint.json` | -        | hand-written                 | done   |
 
+### About the Live Preview blueprint
+
+`.wordpress-org/blueprints/blueprint.json` powers the **Live Preview** button. It must not
+carry a step that installs Hoobert: WordPress.org appends its own `installPlugin` step for
+the reviewed version, and the Blueprint schema has no `"resource": "self"` (a blueprint
+using it fails validation and the preview refuses to boot). Keep it to WooCommerce, the
+site options, and the seeder.
+
+Check a change before release. wp.org serves the deployed copy at
+`https://wordpress.org/plugins/wp-json/plugins/v1/plugin/hoobert/blueprint.json`, and any
+blueprint can be validated against the published schema:
+
+```bash
+curl -sS https://playground.wordpress.net/blueprint-schema.json -o /tmp/blueprint-schema.json
+npx ajv-cli validate -s /tmp/blueprint-schema.json -d .wordpress-org/blueprints/blueprint.json
+```
+
 ### About the owl
 
 `assets-src/hoobert-owl.png` is the original "funny owl" artwork by agustrisana

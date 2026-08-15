@@ -153,12 +153,29 @@ real install with the plugin active and WooCommerce alongside it.
 |         | WordPress | WooCommerce | PHP | Result          |
 | ------- | --------- | ----------- | --- | --------------- |
 | Floor   | 6.6.2     | 9.4.3       | 8.2 | all checks pass |
-| Ceiling | 7.0.2     | 10.9.4      | 8.5 | all checks pass |
+| Ceiling | 7.1-RC3   | 10.9.4      | 8.5 | all checks pass |
 
 Checked at both ends: the plugin activates, `tools.json` parses to 28 tools, core
-registers `react-jsx-runtime` and `wp-commands`, the bundle enqueues _and is
-actually printed_, every declared dependency resolves, all four `hoobert/v1`
-routes register, the settings page renders, and the history table is created.
+registers every script the bundle declares as a dependency, the bundle enqueues
+_and is actually printed_, all three `hoobert/v1` routes register, and the
+history table is created.
+
+`scripts/check-compat.php` is that list as a script, so moving the ceiling is one
+command rather than a round of manual poking. It prints the version header the
+table's row is made of:
+
+```bash
+docker compose run --rm --entrypoint wp wpcli eval-file /scripts/check-compat.php
+```
+
+The ceiling is a release candidate because 7.1 lands August 19, 2026, and
+WordPress.org accepts a `Tested up to` claim made against the RC. Re-run the
+script against the GA build once it is out.
+
+Note that rebuilding the `wordpress` image does **not** upgrade an existing
+stack: the official image only populates an empty directory, so a `wp_data`
+volume that already holds an install keeps its old core. Move it with
+`wp core update --version=<version> --force`, then `wp core update-db`.
 
 ### Why the floor is 6.6, and how it fails below it
 

@@ -25,7 +25,7 @@ services:
       retries: 20
 
   wordpress:
-    # Base image (wordpress:7.0.0-php8.5-apache) is pinned in docker/Dockerfile,
+    # Base image (wordpress:beta-7.1-RC3-php8.5-apache) is pinned in docker/Dockerfile,
     # which layers Xdebug on top for step-debugging. Rebuild with `--build`.
     build:
       context: .

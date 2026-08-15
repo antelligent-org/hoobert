@@ -2,7 +2,7 @@
 Contributors: anuragbhandari
 Tags: woocommerce, ai, command palette, store management, productivity
 Requires at least: 6.6
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 8.0
 Requires Plugins: woocommerce
 Stable tag: 0.2.3

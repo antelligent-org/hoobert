@@ -5,7 +5,7 @@ Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 8.0
 Requires Plugins: woocommerce
-Stable tag: 0.2.3
+Stable tag: 0.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -164,6 +164,17 @@ Yes. The repository has a [WordPress Playground](https://github.com/antelligent-
 7. The store-wide audit log records every command, who ran it, and what it did.
 
 == Changelog ==
+
+= 0.3.0 =
+
+**Features**
+
+* default to Fernfly's shared endpoint
+* remove all plugin data on uninstall
+
+**Documentation**
+
+* describe the shared endpoint ([92ada62](https://github.com/antelligent-org/hoobert/commit/92ada6251625468c1b0c695a1eaf34e181b1df87)), closes [#12](https://github.com/antelligent-org/hoobert/issues/12)
 
 = 0.2.3 =
 

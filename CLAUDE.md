@@ -23,12 +23,21 @@ shippable product: no "demo" framing in code, UI, or docs.
 
 ## Inference contract
 
-- The plugin POSTs to a single inference endpoint (the full URL, e.g.
-  `https://fernfly.com/api/p/27/infer`), set on the settings page (WooCommerce -> Hoobert).
-- Request: `POST {endpoint}` with header `X-Api-Key: {api_key}` and JSON body
-  `{ utterance, meta }`. The `utterance` is the merchant query with page context folded
-  in; `meta` carries the raw context.
-- Response: `{ calls: [{ name, arguments }], ... }`. Out-of-scope requests come back as
+- Two connections, chosen on the settings page (WooCommerce -> Hoobert). Until a choice
+  is saved, a site with both an endpoint and a key uses them; any other site uses the
+  shared model (`Hoobert_Settings::uses_shared()`).
+- **Shared model (default):** `https://fernfly.com/api/shared/woocommerce`, no account
+  needed, a daily allowance per site host. The first command calls `POST /installs`
+  with `{ site_url }` and stores the returned `install_token` in `hoobert_options`. Each
+  command is `POST /infer` with `X-Api-Key: {install_token}` and
+  `{ utterance, meta, site_url }`. On a 401, or a 409 `code: site_changed`, the plugin
+  registers again and retries once. Success adds `usage`. A 429 may carry
+  `upgrade: { message, signup_url }`, rendered as given; key on `upgrade`, not
+  `quota_exceeded`, which an owner-quota 429 also sets.
+- **Own endpoint:** the full infer URL (e.g. `https://fernfly.com/api/p/27/infer`) with
+  `X-Api-Key: {api_key}` and `{ utterance, meta }`.
+- In both, `utterance` is the merchant query and `meta` carries the page context.
+  Response: `{ calls: [{ name, arguments }], ... }`. Out-of-scope requests come back as
   `{ calls: [], out_of_scope: true, reply }`. The endpoint owns the registered tool set,
   so the plugin does **not** send tools or a model id.
 - The client lives in `includes/class-fern-client.php` (`Hoobert_Fern_Client`).
@@ -53,10 +62,11 @@ shippable product: no "demo" framing in code, UI, or docs.
 
 - `plugin/hoobert/` — `src/` (command-palette front-end, built with `@wordpress/scripts`), `includes/`
   (PHP: `class-rest-proxy`, `class-executor`, `class-fern-client`, `class-tools`,
-  `class-settings`). Main file: `hoobert.php`. PHP classes are prefixed `Hoobert_`;
-  plugin constants `HOOBERT_*` (VERSION/PATH/URL); the inference endpoint URL + API key
-  are stored as plugin options (set under WooCommerce -> Hoobert). REST namespace
-  `hoobert/v1`; text domain `hoobert`.
+  `class-settings`). Main file: `hoobert.php`; `uninstall.php` deletes every option and
+  the history table when the plugin is deleted. PHP classes are prefixed `Hoobert_`;
+  plugin constants `HOOBERT_*` (VERSION/PATH/URL); the connection choice, endpoint URL,
+  API key and shared-model install token live in the `hoobert_options` option (set under
+  WooCommerce -> Hoobert). REST namespace `hoobert/v1`; text domain `hoobert`.
 - `plugin/hoobert/tools.json` — the shipped tool set. The executor reads each tool's private
   `x-woo` block to dispatch the REST call. The canonical training copy lives in the Fernfly
   project; keep the two in sync when tools change.

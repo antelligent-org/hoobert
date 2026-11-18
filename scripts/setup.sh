@@ -77,5 +77,5 @@ echo "==> Done."
 echo "    Store:  ${SITE_URL}"
 echo "    Admin:  ${SITE_URL}/wp-admin  (${ADMIN_USER} / ${ADMIN_PASS})"
 echo
-echo "    Set the inference endpoint URL + API key under WooCommerce → Hoobert,"
-echo "    then press Cmd/Ctrl-K in wp-admin."
+echo "    Press Cmd/Ctrl-K in wp-admin. Hoobert answers on Fernfly's shared model;"
+echo "    to use your own project, set it under WooCommerce → Hoobert."

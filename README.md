@@ -10,7 +10,7 @@ The browser never holds the inference key or WooCommerce credentials. A PHP prox
 
 - [Architecture](#architecture)
 - [Dev setup](#dev-setup)
-- [Getting credentials from Fernfly](#getting-credentials-from-fernfly)
+- [Connecting a model](#connecting-a-model)
 - [Adding new tools](#adding-new-tools)
 - [Layout](#layout)
 - [The tool set](#the-tool-set)
@@ -26,12 +26,12 @@ sequenceDiagram
     actor M as Merchant
     participant UI as Command palette<br/>(browser, src/)
     participant Proxy as PHP proxy<br/>(hoobert/v1)
-    participant Fern as Fernfly project<br/>/api/p/{id}/infer
+    participant Fern as Fernfly<br/>shared endpoint or project
     participant WC as WooCommerce<br/>REST API v3
 
     M->>UI: ⌘K → "Ask Hoobert: refund order 1042"
     UI->>Proxy: POST /resolve { query, context }
-    Proxy->>Fern: POST { utterance, meta }  (X-Api-Key)
+    Proxy->>Fern: POST { utterance, meta }  (X-Api-Key: install token or project key)
     Fern-->>Proxy: { calls: [{ name, arguments }] }
     Proxy-->>UI: annotated call (confirm flag + summary)
     UI-->>M: preview the action
@@ -47,14 +47,14 @@ sequenceDiagram
 Key decisions and why:
 
 - **REST API v3, not the Store API.** The journeys (refunds, create product, order notes, top customers, coupons) are merchant/admin operations that live in `wc/v3`; the customer-facing Store API can't do them. The model is trained on REST v3 tool schemas.
-- **Server-side execution.** The PHP proxy holds the inference key and runs tool calls in-process under the admin's own capabilities, so no API keys touch the browser.
+- **Server-side execution.** The PHP proxy holds the inference key (or the shared model's install token) and runs tool calls in-process under the admin's own capabilities, so no API keys touch the browser.
 - **Resolve, then execute, with confirmation.** `/resolve` returns the chosen tool call without running it; the UI previews it and, for tools flagged `x-woo.confirm`, requires a confirm click before `/execute` runs it.
 
 The proxy exposes three routes, all gated on `manage_woocommerce`:
 
 | Route                 | Method | Purpose                                                                                              |
 | --------------------- | ------ | ---------------------------------------------------------------------------------------------------- |
-| `/hoobert/v1/resolve` | POST   | Send `{ query, context }` to the inference endpoint; return the chosen tool call(s), each annotated with its confirm flag and description. No execution. |
+| `/hoobert/v1/resolve` | POST   | Send `{ query, context }` to the inference endpoint; return the chosen tool call(s), each annotated with its confirm flag and description, plus the shared model's `usage_note`. No execution. A spent allowance answers 429 with the server's `upgrade` block. |
 | `/hoobert/v1/execute` | POST   | Run one resolved `{ name, arguments }` against WC REST v3 and record it to the audit log.            |
 | `/hoobert/v1/history` | GET    | Return the recent command history for the current user.                                              |
 
@@ -81,7 +81,7 @@ open http://localhost:8080/wp-admin
 
 If you bring the stack up before building the bundle, the plugin won't activate. Build it, then re-run provisioning with `docker compose run --rm wpcli`.
 
-Then set the inference endpoint URL and API key under **WooCommerce → Hoobert** (see [Getting credentials from Fernfly](#getting-credentials-from-fernfly)). The WooCommerce REST API key/secret for external/curl testing are printed once in the `wpcli` logs.
+The command bar answers straight away on Fernfly's shared model. To test against your own project, set it under **WooCommerce → Hoobert** (see [Connecting a model](#connecting-a-model)). The WooCommerce REST API key/secret for external/curl testing are printed once in the `wpcli` logs.
 
 **Front-end workflow** (run inside `plugin/hoobert`):
 
@@ -98,16 +98,25 @@ Docker images (WordPress, MariaDB, WP-CLI) are pinned in `docker-compose.yml` so
 
 **No-install demo.** [`blueprint/`](blueprint/) holds a [WordPress Playground](https://wordpress.github.io/wordpress-playground/) blueprint that spins up a throwaway store in the browser, WooCommerce and Hoobert pre-installed and seeded, no local stack required. See [`blueprint/README.md`](blueprint/README.md).
 
-## Getting credentials from Fernfly
+## Connecting a model
 
-Hoobert needs two values, set on the settings page (**WooCommerce → Hoobert**):
+The settings page (**WooCommerce → Hoobert**) offers two connections. Neither sends a tool list or a model id, because the endpoint owns the tool set.
+
+**Fernfly's free shared model (the default).** Fernfly serves one model for every Hoobert install at `https://fernfly.com/api/shared/woocommerce`, so a fresh install works with no account. Each site gets a daily allowance (50 requests today).
+
+- On the first command the plugin calls `POST /installs` with `{ site_url }` and stores the returned `install_token` in `hoobert_options`.
+- Every command is `POST /infer` with `X-Api-Key: <install_token>` and `{ utterance, meta, site_url }`. A success adds `usage: { limit, used, remaining, resets_at }`, which the command bar shows as "N free requests left today".
+- A 401 (unknown token) or a 409 `site_changed` (a token cloned from another site) makes the plugin register again and retry the command once.
+- Past the allowance, a 429 carries `upgrade: { message, signup_url }`, which the command bar renders as given, with a signup button. The server owns the wording and the link.
+
+**My own Fernfly endpoint.** A project you train and deploy in [Fernfly](https://fernfly.com), for a higher limit and retraining on your own requests. It needs two values:
 
 - **Inference endpoint URL** - the full URL of your Fernfly project's infer route, e.g. `https://fernfly.com/api/p/abc-dddddd-xyz/infer`. This is a stable, project-level endpoint that always routes to the project's active deployment.
 - **API key** - the project's key, sent as the `X-Api-Key` header on every inference request.
 
-To get them, open your project in [Fernfly](https://fernfly.com) (the platform that fine-tunes and deploys the Fern model behind Hoobert). The project owns the registered WooCommerce tool set and its active deployment; copy its infer URL and API key into the settings page. Until both are set, the command bar returns a "not configured" error.
+The plugin sends `{ utterance, meta }` to this endpoint. Keep the tool set in the project in sync with [`plugin/hoobert/tools.json`](plugin/hoobert/tools.json) (see below).
 
-The plugin sends only `{ utterance, meta }` to this endpoint. It does **not** send a tool list or a model id, because the project owns the tool set. Keep the tool set in the project in sync with [`plugin/hoobert/tools.json`](plugin/hoobert/tools.json) (see below).
+Until a choice is saved, a site that already has both an endpoint and a key keeps using them, and any other site uses the shared model.
 
 ## Adding new tools
 

@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0](https://github.com/antelligent-org/hoobert/compare/v0.2.3...v0.3.0) (2026-11-18)
+
+
+### Features
+
+* default to Fernfly's shared endpoint ([7af7387](https://github.com/antelligent-org/hoobert/commit/7af738711e0264a649838f4469f9e2cc7bcf029a))
+* remove all plugin data on uninstall ([3796b8c](https://github.com/antelligent-org/hoobert/commit/3796b8c669f45b616e5313e403419fd11e3376ba))
+
+
+### Documentation
+
+* describe the shared endpoint ([92ada62](https://github.com/antelligent-org/hoobert/commit/92ada6251625468c1b0c695a1eaf34e181b1df87)), closes [#12](https://github.com/antelligent-org/hoobert/issues/12)
+
 ## [0.2.3](https://github.com/antelligent-org/hoobert/compare/v0.2.2...v0.2.3) (2026-07-29)
 
 

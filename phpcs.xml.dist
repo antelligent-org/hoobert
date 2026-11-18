@@ -6,6 +6,7 @@
 	     conventions, not WordPress's, so they are out of scope, as are the
 	     provisioning scripts, which run under WP-CLI rather than in the plugin. -->
 	<file>plugin/hoobert/hoobert.php</file>
+	<file>plugin/hoobert/uninstall.php</file>
 	<file>plugin/hoobert/includes</file>
 
 	<arg name="extensions" value="php"/>

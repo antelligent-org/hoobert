@@ -71,9 +71,17 @@ class Hoobert_Test_State {
 	public static array $enqueued_styles = array();
 
 	/**
+	 * What home_url() returns.
+	 *
+	 * @var string
+	 */
+	public static string $home_url = 'https://store.example';
+
+	/**
 	 * Clear all state. Call from setUp().
 	 */
 	public static function reset(): void {
+		self::$home_url        = 'https://store.example';
 		self::$options         = array();
 		self::$http_handler    = null;
 		self::$rest_handler    = null;
@@ -310,11 +318,24 @@ function esc_html( string $text ): string {
 /**
  * Approximates core's behaviour for the case that matters here: a URL whose
  * scheme is not in the allowed protocol list comes back empty.
+ *
+ * @param string[]|null $protocols Allowed schemes; core's default list is wider than http(s).
  */
-function esc_url_raw( string $url ): string {
+function esc_url_raw( string $url, ?array $protocols = null ): string {
 	$url    = trim( $url );
 	$scheme = strtolower( (string) parse_url( $url, PHP_URL_SCHEME ) );
-	return in_array( $scheme, array( 'http', 'https' ), true ) ? $url : '';
+	return in_array( $scheme, $protocols ?? array( 'http', 'https' ), true ) ? $url : '';
+}
+
+function _n( string $single, string $plural, int $number, string $domain = 'default' ): string {
+	return 1 === $number ? $single : $plural;
+}
+
+/**
+ * The site's address, as the shared endpoint sees it.
+ */
+function home_url(): string {
+	return Hoobert_Test_State::$home_url;
 }
 
 function sanitize_text_field( string $value ): string {

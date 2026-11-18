@@ -1,7 +1,8 @@
 <?php
 /**
- * Hoobert_Fern_Client: the request it sends to the inference endpoint and how it
- * normalizes the response into { ok, calls }.
+ * Hoobert_Fern_Client on the merchant's own endpoint: the request it sends and
+ * how it normalizes the response into { ok, calls }. The shared endpoint's
+ * registration and retry live in SharedEndpointTest.
  *
  * @package Hoobert
  */
@@ -13,8 +14,9 @@ class FernClientTest extends HoobertTestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		Hoobert_Test_State::$options[ Hoobert_Settings::OPTION_NAME ] = array(
-			'endpoint' => self::ENDPOINT,
-			'api_key'  => 'test-key',
+			'connection' => Hoobert_Settings::CONNECTION_OWN,
+			'endpoint'   => self::ENDPOINT,
+			'api_key'    => 'test-key',
 		);
 	}
 
@@ -37,7 +39,7 @@ class FernClientTest extends HoobertTestCase {
 	}
 
 	public function test_missing_configuration_fails_without_a_request(): void {
-		Hoobert_Test_State::$options = array();
+		Hoobert_Test_State::$options[ Hoobert_Settings::OPTION_NAME ] = array( 'connection' => Hoobert_Settings::CONNECTION_OWN );
 
 		$result = $this->infer();
 
@@ -48,7 +50,10 @@ class FernClientTest extends HoobertTestCase {
 	}
 
 	public function test_missing_api_key_fails_without_a_request(): void {
-		Hoobert_Test_State::$options[ Hoobert_Settings::OPTION_NAME ] = array( 'endpoint' => self::ENDPOINT );
+		Hoobert_Test_State::$options[ Hoobert_Settings::OPTION_NAME ] = array(
+			'connection' => Hoobert_Settings::CONNECTION_OWN,
+			'endpoint'   => self::ENDPOINT,
+		);
 
 		$this->assertFalse( $this->infer()['ok'] );
 		$this->assertSame( array(), Hoobert_Test_State::$http_requests );
@@ -70,6 +75,8 @@ class FernClientTest extends HoobertTestCase {
 		// The endpoint owns the tool set, so neither tools nor a model id is sent.
 		$this->assertArrayNotHasKey( 'tools', $body );
 		$this->assertArrayNotHasKey( 'model', $body );
+		// The site address is the shared endpoint's business only.
+		$this->assertArrayNotHasKey( 'site_url', $body );
 	}
 
 	public function test_empty_context_is_encoded_as_an_object_not_an_array(): void {
@@ -94,6 +101,7 @@ class FernClientTest extends HoobertTestCase {
 			$result['calls']
 		);
 		$this->assertFalse( $result['out_of_scope'] );
+		$this->assertNull( $result['usage'] );
 	}
 
 	public function test_arguments_delivered_as_a_json_string_are_decoded(): void {
@@ -155,6 +163,17 @@ class FernClientTest extends HoobertTestCase {
 
 		$this->assertFalse( $result['ok'] );
 		$this->assertSame( 'Project has no active deployment.', $result['error'] );
+		$this->assertSame( 503, $result['status'] );
+	}
+
+	public function test_an_owner_quota_429_carries_no_upsell(): void {
+		$this->endpoint_returns( array( 'error' => 'Daily request limit reached for this project.', 'quota_exceeded' => true ), 429 );
+
+		$result = $this->infer();
+
+		$this->assertFalse( $result['ok'] );
+		$this->assertSame( 429, $result['status'] );
+		$this->assertArrayNotHasKey( 'upgrade', $result );
 	}
 
 	public function test_http_error_without_a_message_falls_back_to_the_status(): void {

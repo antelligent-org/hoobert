@@ -41,10 +41,10 @@ npx ajv-cli validate -s /tmp/blueprint-schema.json -d blueprint/blueprint.json
 - The seeder is fetched at launch from `scripts/seed-sample-data.php` on the `main` branch
   (via the `writeFile` step), so `features.networking` must stay `true`. If you pin the
   blueprint to a release tag, point that URL at the same tag.
-- Set the inference endpoint + key. The `hoobert_options` in the `setSiteOptions` step
-  pre-fill the endpoint with the example value and leave `api_key` blank, so the command
-  bar won't answer until you add a working project endpoint + `X-Api-Key`. Fill these on
-  the settings page after launch, or bake real demo values into the blueprint.
+- No endpoint or key is needed. Hoobert answers on Fernfly's free shared model, and each
+  Playground visit registers its own install on the first command, with its own daily
+  allowance. To demo your own project instead, pick **My own Fernfly endpoint** on the
+  settings page after launch.
 
 ## Launching
 

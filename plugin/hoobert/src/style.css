@@ -60,6 +60,23 @@
 	color: #e0736b;
 }
 
+/* Upsell shown when the shared model's free requests are used up. */
+.hoobert-upgrade {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.5;
+	color: #eef1f3;
+}
+
+/* Shared-model allowance, a quiet footer under the panel. */
+.hoobert-usage {
+	margin: 0;
+	padding: 10px 20px;
+	font-size: 12px;
+	color: #8a949c;
+	border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 .hoobert-confirm-message {
 	margin: 0 0 4px;
 	font-size: 14px;
@@ -180,6 +197,11 @@
 	border: 0;
 	border-radius: 8px;
 	cursor: pointer;
+}
+
+a.hoobert-btn {
+	display: inline-block;
+	text-decoration: none;
 }
 
 .hoobert-btn.is-primary {

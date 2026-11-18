@@ -125,6 +125,7 @@ jobs:
           mkdir -p dist/hoobert
           cp -R \
             plugin/hoobert/hoobert.php \
+            plugin/hoobert/uninstall.php \
             plugin/hoobert/tools.json \
             plugin/hoobert/readme.txt \
             plugin/hoobert/includes \

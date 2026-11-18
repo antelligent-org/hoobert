@@ -85,13 +85,16 @@ class Hoobert_Rest_Proxy {
 
 		$result = ( new Hoobert_Fern_Client() )->infer( $query, $context );
 		if ( ! $result['ok'] ) {
-			return new WP_REST_Response(
-				array(
-					'ok'    => false,
-					'error' => $result['error'] ?? 'inference failed',
-				),
-				502
+			$body = array(
+				'ok'    => false,
+				'error' => $result['error'] ?? 'inference failed',
 			);
+			if ( ! empty( $result['upgrade'] ) ) {
+				$body['upgrade'] = $result['upgrade'];
+			}
+			// A spent allowance or a rate limit is the caller's to wait out, not a bad gateway.
+			$status = (int) ( $result['status'] ?? 0 );
+			return new WP_REST_Response( $body, 429 === $status ? 429 : 502 );
 		}
 
 		// Annotate each call with the tool's confirm flag + human summary.
@@ -107,12 +110,28 @@ class Hoobert_Rest_Proxy {
 
 		return new WP_REST_Response(
 			array(
-				'ok'    => true,
-				'calls' => $calls,
-				'reply' => $result['reply'] ?? '',
+				'ok'         => true,
+				'calls'      => $calls,
+				'reply'      => $result['reply'] ?? '',
+				'usage_note' => self::usage_note( $result['usage'] ?? null ),
 			),
 			200
 		);
+	}
+
+	/**
+	 * One line on what is left of the shared model's daily allowance, for the
+	 * command bar. Empty for the merchant's own endpoint, which reports no usage.
+	 *
+	 * @param array|null $usage Normalized usage from the client.
+	 */
+	private static function usage_note( ?array $usage ): string {
+		if ( null === $usage ) {
+			return '';
+		}
+		$remaining = (int) $usage['remaining'];
+		/* translators: %d: number of free requests left today. */
+		return sprintf( _n( '%d free request left today', '%d free requests left today', $remaining, 'hoobert' ), $remaining );
 	}
 
 	/**

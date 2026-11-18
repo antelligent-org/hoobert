@@ -33,7 +33,7 @@ Hoobert is meant to be trusted with a live store, so the boring parts got the mo
 
 * **Nothing runs until you see it.** Every request is resolved into a concrete action first and previewed back to you in plain English. Anything destructive - refunds, deletions, status changes, price and stock edits - needs a confirm click before it touches your data.
 * **Your permissions, not the plugin's.** Actions execute in-process through WooCommerce's own REST API v3, under your logged-in admin session. Hoobert can never do something your own account could not do.
-* **No keys in the browser.** The inference key is stored server-side and used server-side. Your browser never holds a credential, and Hoobert never creates or uses a WooCommerce consumer key/secret pair.
+* **No keys in the browser.** The inference key, or the shared model's install token, is stored and used server-side. Your browser never holds a credential, and Hoobert never creates or uses a WooCommerce consumer key/secret pair.
 * **Everything is written down.** Every executed command is recorded in a store-wide audit log: the request, the exact REST call, the arguments, the outcome, and who ran it.
 * **A fixed, small vocabulary.** Hoobert ships a set of 28 defined WooCommerce actions. It cannot invent a 29th, run arbitrary code, or reach any part of your site outside that set.
 
@@ -41,7 +41,7 @@ Hoobert is meant to be trusted with a live store, so the boring parts got the mo
 
 Hoobert is powered by **Fern**, a family of small, fine-tuned function-calling models from [Fernfly](https://fernfly.com). Fern is not a general-purpose chatbot. It does exactly one job: turn a merchant sentence into one of Hoobert's 28 WooCommerce actions with the arguments filled in. Because the job is narrow, the model is small, and small means fast.
 
-You bring your own Fernfly project, so the connection is yours. See **Connecting a model** below.
+Hoobert works out of the box on Fernfly's free shared model. When you want more, connect your own Fernfly project. See **Connecting a model** below.
 
 = What it can do =
 
@@ -60,24 +60,26 @@ Open an order and say *"refund this"*. Open a product and say *"drop the price t
 
 = Connecting a model =
 
-Hoobert needs a Fernfly project to read requests. It takes a few minutes, and the free tier is enough to try it:
+Hoobert works as soon as it is activated. Out of the box it uses Fernfly's free shared model: no account, no key, nothing to set up. Each site gets a daily allowance of free requests, currently 50. When a day's allowance runs out, Hoobert says so and links to a free Fernfly account.
+
+For more requests a day, or a model you can retrain on your own store's requests, connect your own Fernfly project. It takes a few minutes, and the free tier is enough:
 
 1. Create a free account at [fernfly.com](https://fernfly.com) and start a new project. No credit card required.
 2. Choose the WooCommerce template in the new project wizard for a zero-configuration flow. You could also choose the "from scratch" option and import Hoobert's WooCommerce tool set into the project. It ships with this plugin as `tools.json`, in the plugin folder.
 3. Train and deploy the project. Fernfly generates the training data; you do not need any ML background.
-4. Copy the project's **infer URL** and **API key** into **WooCommerce -> Hoobert** and save.
+4. Under **WooCommerce -> Hoobert**, choose **My own Fernfly endpoint**, paste the project's **infer URL** and **API key**, and save.
 
-Until both fields are set, the command bar tells you it is not configured. Nothing is sent anywhere before then.
+Once your own endpoint is saved, Hoobert stops using the shared model. You can switch back at any time.
 
 = External service =
 
 Hoobert sends your typed request to a Fernfly inference endpoint so the model can turn it into a WooCommerce action. This is required for the plugin to function, and it is the only external service it uses.
 
 * **Service:** Fernfly - [fernfly.com](https://fernfly.com)
-* **When:** only when you run a command from the command bar. Never on page load, on a schedule, or in the background.
-* **What is sent:** the text you typed, and the id of the order or product on the screen you are on, so that "this order" resolves. Nothing else. No customer records, no order contents, no site credentials, no analytics, no telemetry.
-* **What comes back:** the name of one of Hoobert's 28 actions and its arguments. The action is then run locally, by your own site.
-* **Where it goes:** the endpoint URL you configure. You choose the project; Hoobert has no default and ships with no key.
+* **When:** only when you run a command from the command bar. Never on page load, on a schedule, or in the background. On the shared model, the first command also registers your site once, to get its install token.
+* **What is sent:** the text you typed, and the id of the order or product on the screen you are on, so that "this order" resolves. On the shared model, your site's address (its home URL) goes too, so Fernfly can count the site's free daily requests. Nothing else. No customer records, no order contents, no site credentials, no analytics, no telemetry.
+* **What comes back:** the name of one of Hoobert's 28 actions and its arguments. The action is then run locally, by your own site. The shared model also says how many free requests are left today.
+* **Where it goes:** by default, Fernfly's shared endpoint at `https://fernfly.com/api/shared/woocommerce`. If you connect your own Fernfly project, the endpoint URL you configure instead.
 * **Terms of service:** [fernfly.com/terms-of-service](https://fernfly.com/terms-of-service)
 * **Privacy policy:** [fernfly.com/privacy-policy](https://fernfly.com/privacy-policy)
 
@@ -92,18 +94,18 @@ The owl is by agustrisana: [Funny owl icons created by agustrisana - Flaticon](h
 1. Install and activate **WooCommerce** if you have not already. Hoobert will not activate without it.
 2. Install Hoobert from **Plugins -> Add New**, or upload the plugin folder to `/wp-content/plugins/`.
 3. Activate it through the **Plugins** screen.
-4. Go to **WooCommerce -> Hoobert** and enter your Fernfly inference endpoint URL and API key. See **Connecting a model** in the description if you do not have them yet.
-5. Press **Cmd/Ctrl-K** anywhere in wp-admin, start typing, and pick **Ask Hoobert**.
+4. Press **Cmd/Ctrl-K** anywhere in wp-admin, start typing, and pick **Ask Hoobert**. It works straight away on Fernfly's free shared model.
+5. To use your own Fernfly project instead, go to **WooCommerce -> Hoobert**. See **Connecting a model** in the description.
 
 == Frequently Asked Questions ==
 
 = Do I need an OpenAI or Anthropic key? =
 
-No. Hoobert does not use a general-purpose LLM. It talks to one Fernfly inference endpoint running a small model fine-tuned on Hoobert's own WooCommerce actions, and that is the only outside service involved.
+No. Hoobert does not use a general-purpose LLM, and out of the box it needs no key at all. It talks to one Fernfly inference endpoint running a small model fine-tuned on Hoobert's own WooCommerce actions, and that is the only outside service involved.
 
 = Is it free? =
 
-The plugin is free and GPL, forever. The inference endpoint is a Fernfly project, which has a free tier that is enough for normal single-store use. There is no locked feature, no trial timer, and no upsell inside the plugin.
+The plugin is free and GPL, forever. Out of the box it uses Fernfly's free shared model, which gives each site a daily allowance of requests, currently 50. When a day's allowance runs out, Hoobert says so and links to a free Fernfly account, which allows more requests a day on your own project. Every feature works the same on either. There is no locked feature and no trial timer.
 
 = Can Hoobert break my store? =
 
@@ -113,7 +115,7 @@ That said, a refund is a refund. Read the confirmation before you click it, the 
 
 = What data leaves my site? =
 
-Only the sentence you type, plus the order or product id of the screen you are on. Nothing is sent unless you run a command. Customer data, order contents, and your credentials never reach the inference endpoint. The model only needs your words to decide which action you meant; the action itself runs locally.
+Only the sentence you type, plus the order or product id of the screen you are on. On the shared model, your site's address goes too, so Fernfly can count its daily requests. Nothing is sent unless you run a command. Customer data, order contents, and your credentials never reach the inference endpoint. The model only needs your words to decide which action you meant; the action itself runs locally.
 
 = Who can use the command bar? =
 
@@ -123,17 +125,17 @@ Only logged-in users with the `manage_woocommerce` capability, meaning shop mana
 
 Yes. Hoobert lives entirely in wp-admin and does not touch your storefront, your theme, or your front-end at all. Visitors never load a byte of it.
 
-= It says "not configured". What now? =
+= It says my endpoint's URL or API key is missing. What now? =
 
-Both the inference endpoint URL and the API key must be filled in under **WooCommerce -> Hoobert**. If both are set and you still see it, check that the URL is your project's full infer route (it ends in `/infer`) and that the key was copied without surrounding whitespace.
+That only happens when **My own Fernfly endpoint** is selected under **WooCommerce -> Hoobert**. Fill in both the inference endpoint URL and the API key, or switch back to the free shared model. If both are set and requests still fail, check that the URL is your project's full infer route (it ends in `/infer`) and that the key was copied without surrounding whitespace.
 
 = Hoobert misunderstood me. =
 
-Rephrase closer to the action you want: "refund order 1042" beats "sort out that customer's money". If a request is outside the 28 actions, Hoobert says so rather than guessing. But if you genuinely believe Hoobert got it wrong, head over to Fernfly > Your project > Retrain, find the utterance that it got wrong, correct the function-call JSON in the textbox, save that utterance-function pair, and click the Retrain button. After your model has finished training, Hoobert will start behaving as expected.
+Rephrase closer to the action you want: "refund order 1042" beats "sort out that customer's money". If a request is outside the 28 actions, Hoobert says so rather than guessing. But if you use your own Fernfly project and believe Hoobert got it wrong, head over to Fernfly > Your project > Retrain, find the utterance that it got wrong, correct the function-call JSON in the textbox, save that utterance-function pair, and click the Retrain button. After your model has finished training, Hoobert will start behaving as expected.
 
 = Can I add my own actions? =
 
-Yes. The tool set is `tools.json` in the plugin folder: an OpenAI function schema per action, plus a small block describing the REST call to dispatch. Add your entry there, register the matching schema with your Fernfly project, and retrain. The [repository README](https://github.com/antelligent-org/hoobert) walks through it.
+Yes. The tool set is `tools.json` in the plugin folder: an OpenAI function schema per action, plus a small block describing the REST call to dispatch. Add your entry there, register the matching schema with your own Fernfly project, and retrain. The shared model knows only the 28 actions that ship. The [repository README](https://github.com/antelligent-org/hoobert) walks through it.
 
 = Where is the command history? =
 
@@ -141,15 +143,15 @@ Yes. The tool set is `tools.json` in the plugin folder: an OpenAI function schem
 
 = Does it support languages other than English? =
 
-The interface is translatable. What the model understands depends on the Fernfly project you train, so a non-English store can train on non-English utterances.
+The interface is translatable. What the model understands depends on what it was trained on. With your own Fernfly project, a non-English store can train on non-English utterances.
 
 = Does it work on multisite? =
 
-Yes. Settings and command history are per-site, so each store in a network has its own endpoint and its own audit log.
+Yes. Settings and command history are per site, so each store in a network has its own connection and its own audit log. On the shared model, the daily allowance is counted per domain, so sites under one domain in a subdirectory network share it.
 
 = Can I try it without installing anything? =
 
-Yes. The repository has a [WordPress Playground](https://github.com/antelligent-org/hoobert/tree/main/blueprint) blueprint that spins up a throwaway store in your browser, with WooCommerce, Hoobert, and sample data already set up.
+Yes. The repository has a [WordPress Playground](https://github.com/antelligent-org/hoobert/tree/main/blueprint) blueprint that spins up a throwaway store in your browser, with WooCommerce, Hoobert, and sample data already set up. It answers on the shared model, so there is no key to enter.
 
 == Screenshots ==
 

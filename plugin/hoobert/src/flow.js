@@ -88,6 +88,48 @@ export function actionPhrase( call ) {
 }
 
 /**
+ * The upsell a failed resolve carries once the shared model's free requests are
+ * used up. The server words it, so it is shown as given. Null unless the signup
+ * link is a plain http(s) URL.
+ *
+ * @param {Object} data Parsed error body from the resolve route.
+ * @return {{message:string, url:string}|null} The upsell, or null.
+ */
+export function upgradeFrom( data ) {
+	const url = data?.upgrade?.signup_url;
+	if ( typeof url !== 'string' || ! /^https?:\/\//i.test( url ) ) {
+		return null;
+	}
+	return { message: String( data.upgrade.message || '' ), url };
+}
+
+/**
+ * The shared model's upsell: the server's message and a link to sign up.
+ *
+ * @param {Object} props
+ * @param {Object} props.upgrade Output of upgradeFrom.
+ */
+function UpgradePrompt( { upgrade } ) {
+	return (
+		<Fragment>
+			{ upgrade.message && (
+				<p className="hoobert-upgrade">{ upgrade.message }</p>
+			) }
+			<div className="hoobert-actions">
+				<a
+					className="hoobert-btn is-primary"
+					href={ upgrade.url }
+					target="_blank"
+					rel="noreferrer"
+				>
+					Sign up for free
+				</a>
+			</div>
+		</Fragment>
+	);
+}
+
+/**
  * Plain-English, non-technical sentence describing the write a confirm-flagged
  * tool will perform, so merchants aren't asked to reason about tool names.
  *
@@ -239,6 +281,7 @@ function DebugInfo( { call, result, error, response } ) {
  */
 export function HoobertFlowModal( { query, onClose } ) {
 	const [ flow, setFlow ] = useState( { phase: 'resolving' } );
+	const [ note, setNote ] = useState( '' );
 
 	const doExecute = useCallback(
 		async ( call ) => {
@@ -265,10 +308,15 @@ export function HoobertFlowModal( { query, onClose } ) {
 		setFlow( { phase: 'resolving' } );
 		( async () => {
 			try {
-				const { calls, reply } = await resolve( query );
+				const {
+					calls,
+					reply,
+					usage_note: usageNote,
+				} = await resolve( query );
 				if ( ! active ) {
 					return;
 				}
+				setNote( usageNote || '' );
 				const call = calls && calls[ 0 ];
 				if ( ! call ) {
 					setFlow( {
@@ -284,7 +332,11 @@ export function HoobertFlowModal( { query, onClose } ) {
 				}
 			} catch ( e ) {
 				if ( active ) {
-					setFlow( { phase: 'error', error: e.message } );
+					setFlow( {
+						phase: 'error',
+						error: e.message,
+						upgrade: upgradeFrom( e.data ),
+					} );
 				}
 			}
 		} )();
@@ -399,11 +451,17 @@ export function HoobertFlowModal( { query, onClose } ) {
 						) : (
 							// No tool ran (e.g. no matching action): the message is
 							// already merchant-friendly, so show it as-is.
-							<p className="hoobert-status is-error">
-								{ flow.error }
-							</p>
+							<Fragment>
+								<p className="hoobert-status is-error">
+									{ flow.error }
+								</p>
+								{ flow.upgrade && (
+									<UpgradePrompt upgrade={ flow.upgrade } />
+								) }
+							</Fragment>
 						) ) }
 				</div>
+				{ note && <p className="hoobert-usage">{ note }</p> }
 			</div>
 		</div>
 	);

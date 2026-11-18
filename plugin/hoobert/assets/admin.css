@@ -35,3 +35,13 @@
 .hoobert-result-failed {
 	color: #b32d2e;
 }
+
+/* The endpoint and key only apply to "My own Fernfly endpoint". Browsers without
+   :has() show them throughout, which is harmless. */
+.hoobert-settings:has(input[value="shared"]:checked) .hoobert-own {
+	display: none;
+}
+
+.hoobert-steps {
+	margin: 8px 0 0 2em;
+}

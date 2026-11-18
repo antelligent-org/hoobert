@@ -105,21 +105,21 @@ Re-run it before every submission.
 
 What the guidelines ask for, and where it is satisfied:
 
-| Guideline                            | Where                                                                                                     |
-| ------------------------------------ | --------------------------------------------------------------------------------------------------------- |
-| 1. GPL-compatible licence            | `LICENSE` (GPL-2.0), headers in `hoobert.php` and `readme.txt`                                            |
-| 2. Stable tag matches a real version | `bump-version.js` keeps `Stable tag` in step with the plugin header                                       |
-| 4. No obfuscation, source available  | `src/` is committed; readme links the repo; the build is `wp-scripts`                                     |
-| 5. No trialware or locked features   | Everything in the plugin works; only the model is external                                                |
-| 7. External services documented      | `== External service ==` in readme.txt, plus the settings screen                                          |
-| 7. No calling home without consent   | No request until both settings are saved and the merchant runs a command                                  |
-| 8. SaaS integration, not remote code | Only tool names and arguments come back; execution is local against `wc/v3`                               |
-| 9. No tracking without opt-in        | None. No analytics, no telemetry, no phone-home                                                           |
-| 10. "Powered by" is not forced       | No storefront output at all                                                                               |
-| 11. Unique prefixes                  | `Hoobert_`, `HOOBERT_`, `hoobert_`, `hoobert/v1`                                                          |
-| 12. No hidden files                  | `.DS_Store` removed; the release workflow strips them from the zip                                        |
-| 13. No unneeded files                | The zip ships only `hoobert.php`, `includes/`, `assets/`, `build/`, `tools.json`, `readme.txt`, `LICENSE` |
-| 17. Trademarks                       | Clear. `hoobert` passes both of Plugin Check's lists; see **The name** above                              |
+| Guideline                            | Where                                                                                                                              |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 1. GPL-compatible licence            | `LICENSE` (GPL-2.0), headers in `hoobert.php` and `readme.txt`                                                                     |
+| 2. Stable tag matches a real version | `bump-version.js` keeps `Stable tag` in step with the plugin header                                                                |
+| 4. No obfuscation, source available  | `src/` is committed; readme links the repo; the build is `wp-scripts`                                                              |
+| 5. No trialware or locked features   | Everything in the plugin works. The shared model's daily allowance is a service limit, and any Fernfly endpoint can replace it     |
+| 7. External services documented      | `== External service ==` in readme.txt, plus the settings screen                                                                   |
+| 7. No calling home without consent   | No request until the merchant runs a command; the shared model registers the site on that first command                            |
+| 8. SaaS integration, not remote code | Only tool names and arguments come back; execution is local against `wc/v3`                                                        |
+| 9. No tracking without opt-in        | None. No analytics, no telemetry, no phone-home. The site address the shared model receives counts its allowance and is documented |
+| 10. "Powered by" is not forced       | No storefront output at all                                                                                                        |
+| 11. Unique prefixes                  | `Hoobert_`, `HOOBERT_`, `hoobert_`, `hoobert/v1`                                                                                   |
+| 12. No hidden files                  | `.DS_Store` removed; the release workflow strips them from the zip                                                                 |
+| 13. No unneeded files                | The zip ships only `hoobert.php`, `uninstall.php`, `includes/`, `assets/`, `build/`, `tools.json`, `readme.txt`, `LICENSE`         |
+| 17. Trademarks                       | Clear. `hoobert` passes both of Plugin Check's lists; see **The name** above                                                       |
 
 Security specifics reviewers look for, all present: `ABSPATH` guards on every PHP
 file, `permission_callback` on all three REST routes, `manage_woocommerce` checks,

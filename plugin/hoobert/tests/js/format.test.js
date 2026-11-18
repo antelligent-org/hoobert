@@ -1,10 +1,10 @@
 /**
  * The display helpers behind the two modals: JSON highlighting (which builds raw
  * HTML, so escaping is a correctness concern), the confirm-dialog action phrase,
- * and the history argument/time formatters.
+ * the shared model's upsell, and the history argument/time formatters.
  */
 
-import { highlightJson, actionPhrase } from '../../src/flow';
+import { highlightJson, actionPhrase, upgradeFrom } from '../../src/flow';
 import { formatArg, formatTime } from '../../src/history';
 
 /**
@@ -141,5 +141,43 @@ describe( 'formatTime', () => {
 	it( 'is empty when there is no timestamp', () => {
 		expect( formatTime( 0 ) ).toBe( '' );
 		expect( formatTime( undefined ) ).toBe( '' );
+	} );
+} );
+
+describe( 'upgradeFrom', () => {
+	const upgrade = {
+		message: 'Create a free Fernfly account for 500 requests a day.',
+		signup_url: 'https://fernfly.com/signup?source=hoobert',
+	};
+
+	it( 'reads the message and signup link from the error body', () => {
+		expect(
+			upgradeFrom( { ok: false, error: 'Limit reached.', upgrade } )
+		).toEqual( {
+			message: upgrade.message,
+			url: upgrade.signup_url,
+		} );
+	} );
+
+	it( 'is null when the body carries no upsell', () => {
+		expect(
+			upgradeFrom( { ok: false, error: 'Too many requests.' } )
+		).toBeNull();
+		expect( upgradeFrom( null ) ).toBeNull();
+		expect( upgradeFrom( undefined ) ).toBeNull();
+	} );
+
+	it( 'rejects a signup link that is not http(s)', () => {
+		expect(
+			upgradeFrom( {
+				upgrade: { ...upgrade, signup_url: 'javascript:alert(1)' },
+			} )
+		).toBeNull();
+	} );
+
+	it( 'keeps the link when the server sends no message', () => {
+		expect(
+			upgradeFrom( { upgrade: { signup_url: upgrade.signup_url } } )
+		).toEqual( { message: '', url: upgrade.signup_url } );
 	} );
 } );

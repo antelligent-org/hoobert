@@ -2,8 +2,10 @@
 /**
  * Settings page + typed getters for the Hoobert inference connection.
  *
- * The endpoint URL and API key are stored as plugin options, set under
- * WooCommerce -> Hoobert. That settings page is the single source of config.
+ * A site either uses Fernfly's shared model (the default, keyed by an install
+ * token the plugin registers for itself) or its own Fernfly project (an endpoint
+ * URL and API key the merchant pastes in). Both live in one plugin option, set
+ * under WooCommerce -> Hoobert.
  *
  * @package Hoobert
  */
@@ -16,6 +18,9 @@ class Hoobert_Settings {
 
 	const OPTION_GROUP = 'hoobert_settings';
 	const OPTION_NAME  = 'hoobert_options';
+
+	const CONNECTION_SHARED = 'shared';
+	const CONNECTION_OWN    = 'own';
 
 	/**
 	 * Hook suffix of the settings screen, as returned by add_submenu_page().
@@ -64,7 +69,7 @@ class Hoobert_Settings {
 		}
 
 		$content = '<p class="privacy-policy-tutorial">' . esc_html__( 'Suggested text for stores using Hoobert.', 'hoobert' ) . '</p>'
-			. '<p>' . esc_html__( 'When a store administrator runs a command through Hoobert, the text they typed and the id of the order or product on the screen they are viewing are sent to the inference endpoint configured under WooCommerce -> Hoobert, so that the request can be matched to a WooCommerce action. No customer records, order contents, or site credentials are sent. Requests are only made when an administrator runs a command. Each command an administrator runs is recorded in a log stored on this site.', 'hoobert' ) . '</p>';
+			. '<p>' . esc_html__( 'When a store administrator runs a command through Hoobert, the text they typed and the id of the order or product on the screen they are viewing are sent to Fernfly, so that the request can be matched to a WooCommerce action. By default they go to Fernfly\'s shared inference endpoint, along with this site\'s address, which Fernfly uses to count the site\'s free daily requests. A store that connects its own Fernfly project sends them to the endpoint configured under WooCommerce -> Hoobert instead. No customer records, order contents, or site credentials are sent. Requests are only made when an administrator runs a command. Each command an administrator runs is recorded in a log stored on this site.', 'hoobert' ) . '</p>';
 
 		wp_add_privacy_policy_content( 'Hoobert', wp_kses_post( $content ) );
 	}
@@ -82,6 +87,34 @@ class Hoobert_Settings {
 	 */
 	public static function api_key(): string {
 		return (string) ( self::opts()['api_key'] ?? '' );
+	}
+
+	/**
+	 * Whether commands go to Fernfly's shared model rather than the merchant's own
+	 * endpoint. A saved choice wins. Before one is saved, a site with both an
+	 * endpoint and a key keeps using them, and any other site gets the shared model.
+	 */
+	public static function uses_shared(): bool {
+		$saved = self::opts()['connection'] ?? '';
+		if ( self::CONNECTION_SHARED === $saved || self::CONNECTION_OWN === $saved ) {
+			return self::CONNECTION_SHARED === $saved;
+		}
+		return '' === self::endpoint() || '' === self::api_key();
+	}
+
+	/**
+	 * Token the shared endpoint issued this site, sent as its X-Api-Key. Empty
+	 * until the first command registers the site.
+	 */
+	public static function install_token(): string {
+		return (string) ( self::opts()['install_token'] ?? '' );
+	}
+
+	/**
+	 * Store a newly issued install token, leaving the other settings alone.
+	 */
+	public static function save_install_token( string $token ): void {
+		update_option( self::OPTION_NAME, array_merge( self::opts(), array( 'install_token' => $token ) ) );
 	}
 
 	/**
@@ -125,9 +158,11 @@ class Hoobert_Settings {
 	 *
 	 * The key field renders empty rather than echoing the stored secret, so an
 	 * empty submission means "leave it alone", not "clear it". Clearing is done
-	 * with the explicit checkbox.
+	 * with the explicit checkbox. The form never posts the install token, so it
+	 * is carried over unless the input supplies one, as save_install_token() does.
 	 */
 	public static function sanitize( $input ): array {
+		$input     = is_array( $input ) ? $input : array();
 		$submitted = sanitize_text_field( (string) ( $input['api_key'] ?? '' ) );
 		$clearing  = ! empty( $input['api_key_clear'] );
 
@@ -135,9 +170,18 @@ class Hoobert_Settings {
 			$submitted = self::api_key();
 		}
 
+		$connection = (string) ( $input['connection'] ?? '' );
+		if ( self::CONNECTION_SHARED !== $connection && self::CONNECTION_OWN !== $connection ) {
+			$connection = self::uses_shared() ? self::CONNECTION_SHARED : self::CONNECTION_OWN;
+		}
+
 		return array(
-			'endpoint' => esc_url_raw( (string) ( $input['endpoint'] ?? '' ) ),
-			'api_key'  => $clearing ? '' : $submitted,
+			'connection'    => $connection,
+			'endpoint'      => esc_url_raw( (string) ( $input['endpoint'] ?? '' ) ),
+			'api_key'       => $clearing ? '' : $submitted,
+			'install_token' => array_key_exists( 'install_token', $input )
+				? sanitize_text_field( (string) $input['install_token'] )
+				: self::install_token(),
 		);
 	}
 
@@ -172,30 +216,13 @@ class Hoobert_Settings {
 			</div>
 
 			<h2><?php esc_html_e( 'Connect a model', 'hoobert' ); ?></h2>
-			<p><?php esc_html_e( 'Hoobert needs a Fernfly project to read your requests. Setting one up takes a few minutes:', 'hoobert' ); ?></p>
-			<ol>
-				<li>
-					<?php
-					printf(
-						wp_kses(
-							/* translators: %s: link to the Fernfly sign-up page. */
-							__( 'Create a free account at %s and start a new project.', 'hoobert' ),
-							array()
-						),
-						'<a href="' . esc_url( 'https://fernfly.com' ) . '" target="_blank" rel="noreferrer">fernfly.com</a>'
-					);
-					?>
-				</li>
-				<li><?php esc_html_e( 'Choose the WooCommerce template in the new project wizard for a zero-configuration flow.', 'hoobert' ); ?></li>
-				<li><?php esc_html_e( 'Train the project, then deploy it. Fernfly generates the training data for you.', 'hoobert' ); ?></li>
-				<li><?php esc_html_e( 'Copy the project\'s infer URL and API key into the fields below, and save.', 'hoobert' ); ?></li>
-			</ol>
+			<p><?php esc_html_e( 'Hoobert works as soon as it is installed, on Fernfly\'s free shared model. Press ⌘K / Ctrl-K anywhere in wp-admin and pick "Ask Hoobert".', 'hoobert' ); ?></p>
 			<p class="description">
 				<?php
 				printf(
 					wp_kses(
 						/* translators: 1: terms of service link, 2: privacy policy link. */
-						__( 'Using Hoobert sends your typed request and the current screen\'s order or product id to Fernfly. Nothing else leaves your store, and requests are only sent when you run a command. See Fernfly\'s %1$s and %2$s.', 'hoobert' ),
+						__( 'Using Hoobert sends your typed request and the current screen\'s order or product id to Fernfly. The shared model also receives your site\'s address, to count its free daily requests. Nothing else leaves your store, and requests are only sent when you run a command. See Fernfly\'s %1$s and %2$s.', 'hoobert' ),
 						array()
 					),
 					'<a href="' . esc_url( 'https://fernfly.com/terms-of-service' ) . '" target="_blank" rel="noreferrer">' . esc_html__( 'terms of service', 'hoobert' ) . '</a>',
@@ -204,16 +231,52 @@ class Hoobert_Settings {
 				?>
 			</p>
 
-			<p><?php esc_html_e( 'Once both fields are saved, press ⌘K / Ctrl-K anywhere in wp-admin and pick "Ask Hoobert".', 'hoobert' ); ?></p>
-			<form method="post" action="options.php">
+			<form method="post" action="options.php" class="hoobert-settings">
 				<?php settings_fields( self::OPTION_GROUP ); ?>
+				<?php $shared = self::uses_shared(); ?>
 				<table class="form-table" role="presentation">
 					<tr>
+						<th scope="row"><?php esc_html_e( 'Model', 'hoobert' ); ?></th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text"><?php esc_html_e( 'Model', 'hoobert' ); ?></legend>
+								<label>
+									<input type="radio" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[connection]" value="<?php echo esc_attr( self::CONNECTION_SHARED ); ?>" <?php checked( $shared ); ?> />
+									<?php esc_html_e( 'Fernfly\'s free shared model', 'hoobert' ); ?>
+								</label>
+								<p class="description"><?php esc_html_e( 'No account needed. Each site gets a number of free requests a day.', 'hoobert' ); ?></p>
+								<br />
+								<label>
+									<input type="radio" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[connection]" value="<?php echo esc_attr( self::CONNECTION_OWN ); ?>" <?php checked( ! $shared ); ?> />
+									<?php esc_html_e( 'My own Fernfly endpoint', 'hoobert' ); ?>
+								</label>
+								<p class="description"><?php esc_html_e( 'More requests a day, and a model you can retrain on your own requests. Setting one up takes a few minutes:', 'hoobert' ); ?></p>
+								<ol class="hoobert-steps">
+									<li>
+										<?php
+										printf(
+											wp_kses(
+												/* translators: %s: link to the Fernfly sign-up page. */
+												__( 'Create a free account at %s and start a new project.', 'hoobert' ),
+												array()
+											),
+											'<a href="' . esc_url( 'https://fernfly.com' ) . '" target="_blank" rel="noreferrer">fernfly.com</a>'
+										);
+										?>
+									</li>
+									<li><?php esc_html_e( 'Choose the WooCommerce template in the new project wizard for a zero-configuration flow.', 'hoobert' ); ?></li>
+									<li><?php esc_html_e( 'Train the project, then deploy it. Fernfly generates the training data for you.', 'hoobert' ); ?></li>
+									<li><?php esc_html_e( 'Copy the project\'s infer URL and API key into the fields below, and save.', 'hoobert' ); ?></li>
+								</ol>
+							</fieldset>
+						</td>
+					</tr>
+					<tr class="hoobert-own">
 						<th scope="row"><label for="hoobert-endpoint"><?php esc_html_e( 'Inference endpoint URL', 'hoobert' ); ?></label></th>
 						<td><input name="<?php echo esc_attr( self::OPTION_NAME ); ?>[endpoint]" id="hoobert-endpoint" type="url" class="regular-text" placeholder="https://fernfly.com/api/p/27/infer" value="<?php echo esc_attr( $opts['endpoint'] ?? '' ); ?>" /></td>
 					</tr>
 					<?php $has_key = '' !== self::api_key(); ?>
-					<tr>
+					<tr class="hoobert-own">
 						<th scope="row"><label for="hoobert-key"><?php esc_html_e( 'API key', 'hoobert' ); ?></label></th>
 						<td>
 							<input name="<?php echo esc_attr( self::OPTION_NAME ); ?>[api_key]" id="hoobert-key" type="password" class="regular-text" autocomplete="off" value=""

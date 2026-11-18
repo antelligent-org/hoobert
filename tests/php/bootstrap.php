@@ -21,5 +21,6 @@ require_once HOOBERT_PATH . 'includes/class-tools.php';
 require_once HOOBERT_PATH . 'includes/class-executor.php';
 require_once HOOBERT_PATH . 'includes/class-settings.php';
 require_once HOOBERT_PATH . 'includes/class-fern-client.php';
+require_once HOOBERT_PATH . 'includes/class-rest-proxy.php';
 
 require_once __DIR__ . '/HoobertTestCase.php';
